@@ -1,0 +1,117 @@
+# Shuri Rulebooks
+
+Slow-burn relationship meters for SillyTavern. A character stuck in "mean mode" because their card says so can actually warm up, earn trust, fall in love, or turn on you, one turn at a time.
+
+**Status: first prototype (0.1.0).** It works end to end, but expect rough edges. Rulebooks are edited as JSON for now; a visual editor comes later.
+
+## How it works
+
+Three parts, each with one job:
+
+| Who | Sees | Does |
+|---|---|---|
+| **Your main model** | Your preset and card as usual, plus a short note about where the character stands now | Writes the reply. Never sees or sets a number. |
+| **The judge** (a cheap model) | The latest exchange, the current levels, recent major events and the previous turn's verdict, plus (in Full mode) the card, persona, lorebook entries and earlier messages | Says which events happened and how serious each was. Never sets a number. |
+| **The extension** | The rulebook, the last snapshot and the judge's answer | Does the maths, picks levels, saves a snapshot on the reply, writes the note. |
+
+The note only covers levels that have changed since the start, because the card already describes the starting point:
+
+```
+[Where Ashley stands with Rayan now. This replaces how Ashley's character sheet says Ashley treats Rayan. …]
+- Mean ↔ Kind (began Cruel, now Prickly): The sarcasm is teasing now, not cruel. …
+- Recent (2 turns ago): caught him lying. Ashley is still affected by it.
+```
+
+### Rules that keep it fair
+
+- **Rated by seriousness.** The judge rates each event trivial, minor, serious or severe. The rulebook decides what each level is worth: a white lie is −3 Trust only, while cheating hits Trust, Affection, Love and Kind at once.
+- **Slow gains.** Each meter can gain at most 5 points a turn from ordinary events. Serious and severe losses (as set per event) ignore the cap, so betrayals land in full.
+- **Hard to reach the extremes.** Within the last 20% of a meter's range, gains shrink.
+- **Levels don't flicker.** A level only changes once the value is 5 points past its edge.
+- **Gates.** Love stays locked until Affection reaches 50, and stays unlocked after that.
+- **Expected behaviour isn't news.** The judge scores what you choose to do, and the character acting *against or beyond* their current level. A submissive character kneeling scores nothing, so meters can't feed themselves.
+- **Only what the character knows.** Your inner narration is never evidence. A lie counts when it's discovered.
+- **One turn of hindsight.** Each judgement may cancel or re-rate the previous turn's events. If she kneels and you say "no, today I kneel for you", the first turn is cancelled and your yielding counts. The correction is saved on the later reply, so swiping that reply away undoes it.
+- **No decay or resting points.** Values only move through events.
+
+### Swipes, regenerate, continue, impersonate
+
+- Every reply stores its own snapshot, per swipe, so swiping back and forth always shows the right values.
+- **Swipe and regenerate:** the note is built from the state *before* that reply.
+- **Continue:** re-judges the whole reply as the same turn.
+- **Impersonate and quiet generations** (including Guided Generations) are never judged and never get the note.
+
+### Switching it off
+
+The switch in the window turns the rulebook off for that chat: no judge calls, no note and no chips, so the chat runs exactly as it would without the extension. The meters keep their values and carry on when you switch it back on. Turns played while it was off aren't scored.
+
+## Install
+
+Extensions → Install extension → `https://github.com/rayansaki/Shuri-rulebooks`
+
+Needs SillyTavern 1.19 or later, with the built-in **Connection Manager** extension enabled (the judge borrows a connection profile's API, model and key).
+
+## Setup
+
+1. **Make a connection profile for the judge**, for example GLM 5.3 Flash on OpenRouter. Only its API, model and key are used. The judge always uses the extension's own prompt, temperature (0.2 by default) and reasoning setting, never the profile's preset.
+2. **Pick it** in Extensions → Rulebook → Judge → Model.
+3. **Assign a rulebook to a character** under "Which rulebook each character uses", or attach one to any chat from the Rulebook window (wand menu → Rulebook, or `/rulebook`).
+4. **Starting a new chat** with an assigned character attaches the rulebook and asks the assessor where the character starts. You can adjust each value before the chat starts.
+5. **Keep your Post History last:** the note goes in at depth 0 with role user, where it joins in-chat prompts with order 100. If your Post History is an in-chat prompt with order 100, the note lands after it. Give Post History (and anything else that must come last, like a tracker prompt) an injection order below 100 in the prompt manager.
+
+## The windows
+
+All windows can be dragged by their header and resized from any edge or corner. Position and size are remembered per browser.
+
+- **Rulebook:** an on/off switch for the chat, Lean or Full judge context, the meters with this turn's changes, the status, a preview of the note, and buttons to re-judge the last turn, show the trace, adjust values, edit the rulebook or detach it.
+- **Starting point / Adjust values:** a slider and the assessor's reason for each meter. Before the first judged turn this sets the starting point; afterwards it adjusts the current values.
+- **Edit rulebook:** the rulebook as JSON, with a Check that lists any problems in plain words.
+- **Trace:** the last judgement or assessment: the prompt sent, the raw answer, the events, any revision, and the maths for each meter.
+
+**Chips** under each judged reply show what changed and why (`Trust −3 · lied about the milk (trivial)`). On the newest judged turn you can tap a chip to change its severity or remove it.
+
+## Rulebook format
+
+See `src/defaults.js` for the bundled **Slow burn** rulebook. In short:
+
+```jsonc
+{
+  "name": "Slow burn",
+  "statusMeter": "kindness",                 // which meter's level gives the status line
+  "limits": { "gainCap": 5, "levelMargin": 5, "softZone": 0.2, "recentTurns": 8 },
+  "meters": [
+    { "id": "kindness", "label": "Mean ↔ Kind", "min": -100, "max": 100, "start": 0, "color": "#3fbf9b",
+      "levels": [ { "from": -100, "name": "Cruel", "status": "Walls up", "instruction": "{{char}} treats {{user}} with open contempt…" }, … ] },
+    { "id": "love", …, "gate": { "meter": "affection", "min": 50 } }
+  ],
+  "events": {
+    "dishonesty": {
+      "description": "{{user}} lies to {{char}} … and {{char}} knows or finds out.",
+      "bypassCapFrom": "serious",            // from this severity up, the per-turn cap doesn't apply
+      "journalFrom": "serious",              // from this severity up, it's listed as a recent major event
+      "effects": { "trivial": { "trust": -3 }, "severe": { "trust": -100, "affection": -40, "love": -30, "kindness": -25 } }
+    }
+  }
+}
+```
+
+Levels are listed by where they start (`from`); the last one runs to `max`. Instructions use `{{char}}` and `{{user}}`, so one rulebook works for any character.
+
+## Where things are stored
+
+- **Rulebooks, assignments and settings:** extension settings (nothing is written to character cards).
+- **The chat's rulebook, its on/off state and its starting point:** chat metadata.
+- **Snapshots:** on each reply, in `extra.shuri_rulebook` (and that swipe's copy).
+
+## Known limits of this prototype
+
+- One-to-one chats only (no group chats).
+- Rulebooks are edited as JSON.
+- Only the newest judged turn's chips can be changed by hand.
+- "Reasoning: Off" asks the provider for no reasoning. If a provider refuses that, the judge retries once without the setting.
+
+## Development
+
+```
+npm test   # engine tests (Node 20+)
+```

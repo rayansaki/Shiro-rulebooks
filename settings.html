@@ -1,0 +1,93 @@
+<div id="srb_settings" class="srb-settings">
+    <div class="inline-drawer">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <b>Rulebook</b>
+            <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+        </div>
+        <div class="inline-drawer-content">
+            <label class="checkbox_label"><input type="checkbox" id="srb_enabled"> <span>Enable extension</span></label>
+            <label class="checkbox_label"><input type="checkbox" id="srb_auto_open"> <span>Open the Rulebook window in chats that use a rulebook</span></label>
+            <label class="checkbox_label"><input type="checkbox" id="srb_chips"> <span>Show change chips under replies</span></label>
+            <div class="srb-row"><button type="button" class="menu_button" id="srb_open_window">Open the Rulebook window</button></div>
+
+            <h4>Rulebook library</h4>
+            <div id="srb_library" class="srb-library"></div>
+            <div class="srb-row">
+                <button type="button" class="menu_button" id="srb_new">New rulebook</button>
+                <button type="button" class="menu_button" id="srb_import_btn">Import JSON</button>
+                <input type="file" id="srb_import" accept=".json,application/json" hidden>
+            </div>
+
+            <h4>Which rulebook each character uses</h4>
+            <div class="srb-hint">Saved in the extension, not the card. New chats with that character attach it and work out a fresh starting point.</div>
+            <input type="search" id="srb_char_search" class="text_pole" placeholder="Find a character">
+            <div id="srb_char_results" class="srb-chars"></div>
+            <div class="srb-label">Recent chats</div>
+            <div id="srb_char_recent" class="srb-chars"></div>
+            <button type="button" class="menu_button" id="srb_char_all"></button>
+            <div id="srb_char_assigned" class="srb-chars" hidden></div>
+
+            <h4>Judge</h4>
+            <label class="srb-field">Model
+                <select id="srb_judge_profile" class="text_pole"></select>
+            </label>
+            <div class="srb-hint">Taken from your connection profiles, but only the API, model and key. The judge always uses the extension's own prompt and settings, never a preset.</div>
+            <div class="srb-cols">
+                <label class="srb-field">Reasoning
+                    <select id="srb_reasoning" class="text_pole">
+                        <option value="off">Off</option>
+                        <option value="low">Low</option>
+                        <option value="default">Model default</option>
+                    </select>
+                </label>
+                <label class="srb-field">Temperature
+                    <input type="number" id="srb_temperature" class="text_pole" min="0" max="2" step="0.05">
+                </label>
+                <label class="srb-field">Default context
+                    <select id="srb_default_context" class="text_pole">
+                        <option value="full">Full</option>
+                        <option value="lean">Lean</option>
+                    </select>
+                </label>
+            </div>
+            <label class="checkbox_label"><input type="checkbox" id="srb_retry"> <span>Retry once if the answer isn't valid JSON</span></label>
+
+            <h4>What the full judge reads</h4>
+            <div class="srb-hint">Everything except the latest exchange is labelled as background and never scored. The latest exchange always comes last.</div>
+            <label class="checkbox_label"><input type="checkbox" id="srb_include_card"> <span>Character card and persona (labelled as where the character started)</span></label>
+            <label class="srb-field">Lorebook entries
+                <select id="srb_lorebook" class="text_pole">
+                    <option value="constant">Constant entries only</option>
+                    <option value="triggered">Everything that would trigger this turn</option>
+                    <option value="none">None</option>
+                </select>
+            </label>
+            <div class="srb-hint">From the chat's, character's, persona's and global lorebooks. Covers summaries and pinned memories, whichever extension wrote them.</div>
+            <label class="checkbox_label"><input type="checkbox" id="srb_include_history"> <span>Visible messages not yet summarised (hidden ones are always left out)</span></label>
+            <label class="srb-field">Most messages to read
+                <input type="number" id="srb_history_limit" class="text_pole" min="2" max="500" step="1">
+            </label>
+            <label class="srb-field">Strip from everything the judge reads (one /regex/flags per line)
+                <textarea id="srb_strip" class="text_pole" rows="5" spellcheck="false"></textarea>
+            </label>
+            <div class="srb-hint">The defaults remove trackers, scene lines, style blocks and HTML code blocks, then any remaining tags (keeping their text).</div>
+
+            <h4>Starting point</h4>
+            <label class="srb-field">Assess with
+                <select id="srb_assess_profile" class="text_pole"></select>
+            </label>
+            <label class="checkbox_label"><input type="checkbox" id="srb_assess_confirm"> <span>Show me the values before the chat starts</span></label>
+            <label class="checkbox_label"><input type="checkbox" id="srb_assess_history"> <span>Read the story so far when attached mid-chat</span></label>
+
+            <h4>Note for the main model</h4>
+            <label class="srb-field">Depth (0 = after the last message)
+                <input type="number" id="srb_depth" class="text_pole" min="0" max="20" step="1">
+            </label>
+            <div class="srb-hint">Sent with role user. At depth 0 it joins in-chat prompts with order 100. To keep your Post History last, give Post History (and anything else that must come after the note) an injection order below 100 in the prompt manager.</div>
+            <label class="srb-field">Header
+                <textarea id="srb_header" class="text_pole" rows="3"></textarea>
+            </label>
+            <label class="checkbox_label"><input type="checkbox" id="srb_numbers"> <span>Include the numbers (off: the note describes behaviour only)</span></label>
+        </div>
+    </div>
+</div>

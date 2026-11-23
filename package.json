@@ -1,0 +1,9 @@
+{
+  "name": "shuri-rulebooks",
+  "private": true,
+  "type": "module",
+  "description": "Slow-burn relationship meters for SillyTavern, scored by a separate judge model.",
+  "scripts": {
+    "test": "node --test test/engine.test.mjs"
+  }
+}
