@@ -29,6 +29,11 @@ export function settings() {
         if (Number(s.judge.maxTokens) === 1024) s.judge.maxTokens = 4000;
         s.version = 2;
     }
+    if (s.version < 3) {
+        // Raise the old default; a value someone chose stays as it is.
+        if (Number(s.judge.maxTokens) === 4000) s.judge.maxTokens = 5000;
+        s.version = 3;
+    }
     return s;
 }
 

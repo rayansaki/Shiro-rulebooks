@@ -111,7 +111,7 @@ Levels are listed by where they start (`from`); the last one runs to `max`. Inst
 - One-to-one chats only (no group chats).
 - Rulebooks are edited as JSON.
 - Only the newest judged turn's chips can be changed by hand.
-- **Reasoning:** Off, Minimal, Low or Model default. Off asks the provider for no reasoning, but some providers think anyway (seen with GLM 5.3 Flash via Relace), and some models can only reduce it (Gemini 3.8 Flash still used about 1,100 hidden tokens with Off). Thinking counts towards **Max tokens** (default 4,000, shared by the judge and the assessment), so leave plenty of headroom: the answer itself is about 50 tokens for the judge and a few hundred for the assessment. A cut-off answer shows a clear error and isn't retried. If a provider rejects the reasoning setting outright, the call is retried once without it, and the trace says so.
+- **Reasoning:** Off, Minimal, Low or Model default. Off asks the provider for no reasoning, but some providers think anyway (seen with GLM 5.3 Flash via Relace), and some models can only reduce it (Gemini 3.8 Flash still used about 1,100 hidden tokens with Off). Thinking counts towards **Max tokens** (default 5,000, shared by the judge and the assessment), so leave plenty of headroom: the answer itself is about 50 tokens for the judge and a few hundred for the assessment. A cut-off answer shows a clear error and isn't retried. If a provider rejects the reasoning setting outright, the call is retried once without it, and the trace says so.
 
 ## Development
 

@@ -44,7 +44,7 @@ function bind() {
     bindCheck('srb_chips', () => s.showChips, v => { s.showChips = v; });
     bindValue('srb_reasoning', () => s.judge.reasoning, v => { s.judge.reasoning = v; });
     bindValue('srb_temperature', () => s.judge.temperature, v => { s.judge.temperature = Number.isFinite(v) ? v : 0.2; }, { number: true });
-    bindValue('srb_max_tokens', () => s.judge.maxTokens, v => { s.judge.maxTokens = Math.min(32000, Math.max(256, v || 4000)); }, { number: true });
+    bindValue('srb_max_tokens', () => s.judge.maxTokens, v => { s.judge.maxTokens = Math.min(32000, Math.max(256, v || 5000)); }, { number: true });
     bindValue('srb_default_context', () => s.judge.defaultContext, v => { s.judge.defaultContext = v; });
     bindCheck('srb_retry', () => s.judge.retry, v => { s.judge.retry = v; });
     bindCheck('srb_include_card', () => s.judge.includeCard, v => { s.judge.includeCard = v; });

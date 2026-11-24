@@ -237,7 +237,7 @@ function isChatCompletion(profileId) {
 }
 
 const EFFORT = { off: 'none', minimal: 'minimal', low: 'low' };
-const DEFAULT_MAX_TOKENS = 4000;
+const DEFAULT_MAX_TOKENS = 5000;
 
 /**
  * Sends messages through a connection profile, using only its API, model and key.

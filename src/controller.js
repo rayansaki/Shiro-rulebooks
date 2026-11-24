@@ -87,7 +87,10 @@ export function scheduleJudge(index) {
     if (job) job.controller.abort();
     const controller = new AbortController();
     const entry = { index, controller, promise: null };
-    entry.promise = judgeMessage(index, controller.signal).finally(() => { if (job === entry) job = null; });
+    entry.promise = judgeMessage(index, controller.signal).finally(() => {
+        if (job === entry) job = null;
+        emit('change', { index });
+    });
     job = entry;
     return entry.promise;
 }
@@ -355,4 +358,4 @@ export function chipModel(index) {
 }
 
 export const currentGeneration = () => currentGenType;
-export const isJudging = () => !!job;
+export const isJudging = () => status.pending.size > 0;

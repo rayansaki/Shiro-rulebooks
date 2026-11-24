@@ -239,7 +239,7 @@ export const DEFAULT_STRIP = [
 ].join('\n');
 
 export const DEFAULT_SETTINGS = {
-    version: 2,
+    version: 3,
     enabled: true,
     autoOpenWindow: true,
     showChips: true,
@@ -249,8 +249,8 @@ export const DEFAULT_SETTINGS = {
         profileId: '',
         reasoning: 'off',     // off | minimal | low | default
         temperature: 0.2,
-        maxTokens: 4000,      // for the judge and the assessment; thinking counts towards it
-        defaultContext: 'full', // full | lean
+        maxTokens: 5000,      // for the judge and the assessment; thinking counts towards it
+        defaultContext: 'lean', // lean | full
         retry: true,
         includeCard: true,
         lorebook: 'constant', // constant | triggered | none
