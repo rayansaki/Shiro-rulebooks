@@ -255,3 +255,49 @@ test('an ongoing event is journalled once while it is recent, and again if it es
     const two = nextJournal(rb, [], 1, [{ type: 'scene', severity: 'serious', reason: 'x' }, { type: 'scene', severity: 'serious', reason: 'y' }]);
     assert.equal(two.length, 1, 'twice in one turn is one entry');
 });
+
+test('a cooldown caps gains for the next N turns, then ends', () => {
+    const { rulebook: rb, errors } = validateRulebook({
+        name: 'c',
+        meters: [{ id: 'arousal', min: 0, max: 100, gainCap: 40, softZone: 0, levels: [{ from: 0, name: 'Calm' }] }, { id: 'love', min: 0, max: 100, levels: [{ from: 0, name: 'Low' }] }],
+        events: {
+            climax: { description: 'c', effects: { severe: { arousal: '=0', love: 1 } }, cooldown: { arousal: 3 } },
+            kiss: { description: 'k', effects: { serious: { arousal: 20, love: 2 } } },
+            chill: { description: 'x', effects: { minor: { arousal: -5 } } },
+            peck: { description: 'p', effects: { minor: { arousal: 4 } }, cooldown: { arousal: { turns: 1, cap: 5 } } },
+        },
+    });
+    assert.deepEqual(errors, []);
+    assert.deepEqual(rb.events.climax.cooldown, { arousal: { turns: 3, cap: 0 } }, 'a number means turns with no gain allowed');
+    let r = applyTurn(rb, makeState(rb, { arousal: 90, love: 50 }), [{ type: 'climax', severity: 'severe' }, { type: 'kiss', severity: 'serious' }]);
+    assert.equal(r.state.values.arousal, 0, 'the climax turn itself is unaffected: the reset wins');
+    assert.deepEqual(r.state.cool, { arousal: { left: 3, cap: 0 } });
+    assert.deepEqual(r.cooling, { arousal: { left: 3, cap: 0 } });
+    const seen = [];
+    let s = r.state;
+    for (let i = 0; i < 4; i++) {
+        r = applyTurn(rb, s, [{ type: 'kiss', severity: 'serious' }]);
+        s = r.state;
+        seen.push(s.values.arousal);
+    }
+    assert.deepEqual(seen, [0, 0, 0, 20], 'blocked for three turns, then back to normal');
+    assert.equal(s.values.love, 61, 'other meters keep counting');
+    // the blocked amount shows on the chips
+    s = applyTurn(rb, makeState(rb, { arousal: 0 }), [{ type: 'climax', severity: 'severe' }]).state;
+    r = applyTurn(rb, s, [{ type: 'kiss', severity: 'serious' }]);
+    assert.equal(r.applied[0].deltas.arousal, 0);
+    assert.equal(r.applied[0].cooled, true);
+    assert.deepEqual(r.cooled, { arousal: { blocked: 20, left: 2 } });
+    // drops still apply
+    s = applyTurn(rb, makeState(rb, { arousal: 30 }), [{ type: 'peck', severity: 'minor' }]).state;
+    assert.equal(applyTurn(rb, s, [{ type: 'chill', severity: 'minor' }]).state.values.arousal, 29);
+    // a cap lets a little through
+    assert.equal(applyTurn(rb, s, [{ type: 'kiss', severity: 'serious' }]).state.values.arousal, 39);
+    // a longer cooldown isn't shortened by a shorter one
+    s = applyTurn(rb, makeState(rb, { arousal: 0 }), [{ type: 'climax', severity: 'severe' }]).state;
+    s = applyTurn(rb, s, [{ type: 'peck', severity: 'minor' }]).state;
+    assert.deepEqual(s.cool.arousal, { left: 2, cap: 0 });
+    // a cancelled event starts no cooldown
+    assert.deepEqual(applyTurn(rb, makeState(rb, {}), [{ type: 'climax', severity: 'severe', cancelled: true }]).state.cool, {});
+    assert.ok(validateRulebook({ ...rb, events: { ...rb.events, bad: { description: 'b', effects: {}, cooldown: { nope: 2 } } } }).errors.some(e => /unknown meter "nope"/.test(e)));
+});

@@ -139,7 +139,7 @@ async function judgeMessage(index, signal) {
         const turn = (prev?.snap?.turn ?? 0) + 1;
         const snap = {
             v: 1, rb: rb.id, epoch: meta.epoch, turn,
-            before: mid, after: result.state, events: result.applied, revise, fades: result.fades,
+            before: mid, after: result.state, events: result.applied, revise, fades: result.fades, cooled: result.cooled, cooling: result.cooling,
             journal: nextJournal(rb, journalBase, turn, result.applied),
             judged: { at: Date.now(), mode, model: trace.model },
         };
@@ -193,6 +193,8 @@ export async function overrideEvent(index, eventIndex, action) {
     snap.after = result.state;
     snap.events = result.applied;
     snap.fades = result.fades;
+    snap.cooled = result.cooled;
+    snap.cooling = result.cooling;
     snap.journal = nextJournal(rb, (snap.journal || []).filter(j => j.turn !== snap.turn), snap.turn, result.applied);
     writeSnap(index, snap);
     await ctx().saveChat();

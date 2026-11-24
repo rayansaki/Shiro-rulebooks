@@ -688,6 +688,12 @@
         "severe": {
           "arousal": "=0"
         }
+      },
+      "cooldown": {
+        "arousal": {
+          "turns": 3,
+          "cap": 0
+        }
       }
     },
     "user_climax": {

@@ -51,6 +51,12 @@ export function renderChips(index) {
         for (const [id, d] of Object.entries(snap.fades || {})) {
             chips.push(`<span class="srb-chip srb-muted">${esc(labelOf(rb, id))} ${d > 0 ? '+' : '−'}${Math.round(Math.abs(d))} · fading</span>`);
         }
+        for (const [id, c] of Object.entries(snap.cooled || {})) {
+            chips.push(`<span class="srb-chip srb-muted">${esc(labelOf(rb, id))} +${Math.round(c.blocked)} blocked · cooling down${c.left > 0 ? ` (${c.left} more turn${c.left === 1 ? '' : 's'})` : ' (last turn)'}</span>`);
+        }
+        for (const [id, c] of Object.entries(snap.cooling || {})) {
+            chips.push(`<span class="srb-chip srb-muted">${esc(labelOf(rb, id))} cooldown · ${c.left} turn${c.left === 1 ? '' : 's'}</span>`);
+        }
         if (!chips.length) chips.push('<span class="srb-chip srb-muted">Nothing scored this turn</span>');
         if (snap.revise?.events?.length) chips.push('<span class="srb-chip srb-muted" title="See the previous reply">Revised the previous turn</span>');
         if (snap.manual) chips.push('<span class="srb-chip srb-muted">Adjusted by hand</span>');

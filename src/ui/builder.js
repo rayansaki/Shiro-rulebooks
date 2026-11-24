@@ -53,6 +53,15 @@ export function normalize(draft) {
             }
             if (!Object.keys(eff[sev] || {}).length) delete eff[sev];
         }
+        if (ev.cooldown) {
+            for (const [mid, c] of Object.entries(ev.cooldown)) {
+                const o = typeof c === 'object' && c ? c : { turns: c };
+                const turns = num(o.turns);
+                if (turns === null) { delete ev.cooldown[mid]; continue; }
+                ev.cooldown[mid] = { turns, cap: num(o.cap) ?? 0 };
+            }
+            if (!Object.keys(ev.cooldown).length) delete ev.cooldown;
+        }
         if (!ev.always) delete ev.always;
         if (!ev.bypassCapFrom) delete ev.bypassCapFrom;
         if (!ev.journalFrom) delete ev.journalFrom;
@@ -99,6 +108,7 @@ function renameMeter(rb, from, to) {
             if (!e || !(from in e)) continue;
             ev.effects[sev] = Object.fromEntries(Object.entries(e).map(([k, v]) => [k === from ? to : k, v]));
         }
+        if (ev.cooldown && from in ev.cooldown) ev.cooldown = renameKey(ev.cooldown, from, to);
     }
 }
 
@@ -106,7 +116,10 @@ function dropMeter(rb, id) {
     rb.meters = rb.meters.filter(m => m.id !== id);
     for (const m of rb.meters) if (m.gate?.meter === id) delete m.gate;
     if (rb.statusMeter === id) delete rb.statusMeter;
-    for (const ev of Object.values(rb.events || {})) for (const e of Object.values(ev.effects || {})) if (e) delete e[id];
+    for (const ev of Object.values(rb.events || {})) {
+        for (const e of Object.values(ev.effects || {})) if (e) delete e[id];
+        if (ev.cooldown) { delete ev.cooldown[id]; if (!Object.keys(ev.cooldown).length) delete ev.cooldown; }
+    }
 }
 
 const renameKey = (obj, from, to) => Object.fromEntries(Object.entries(obj).map(([k, v]) => [k === from ? to : k, v]));
@@ -428,6 +441,21 @@ function eventPage(k) {
                 return `<td><input type="text" class="text_pole ${cellClass(v)}" data-bind="${esc(P)}.effect.${s}.${esc(c.id)}" value="${esc(str(v))}" aria-label="${esc(`${cap(s)}, ${c.label || c.id}`)}"></td>`;
             }).join('')}</tr>`).join('')}</tbody>
         </table></div>
+        <h4>Cooldown</h4>
+        <div class="srb-hint">Stops a meter climbing straight back up after this event, for example arousal after a climax. Starts on the next turn; drops and drifting back still happen.</div>
+        ${Object.entries(ev.cooldown || {}).map(([mid, c]) => {
+            const o = typeof c === 'object' && c ? c : { turns: c, cap: 0 };
+            return `<div class="srb-row srb-b-cool">
+                <span>After this event,</span>
+                ${field('Meter', select(`${P}.cool.${mid}.meter`, mid, cols.map(m => [m.id, m.label || m.id])), 'srb-b-coolmeter')}
+                <span>can rise by at most</span>
+                ${field('Points a turn', input(`${P}.cool.${mid}.cap`, o.cap ?? 0, 'inputmode="numeric"'), 'srb-b-narrow')}
+                <span>for the next</span>
+                ${field('Turns', input(`${P}.cool.${mid}.turns`, o.turns, 'inputmode="numeric"'), 'srb-b-narrow')}
+                <button type="button" class="menu_button" data-act="remove-cool" data-id="${esc(mid)}" aria-label="Remove the cooldown on ${esc(labelOf(mid))}">Remove</button>
+            </div>`;
+        }).join('')}
+        <div class="srb-row"><button type="button" class="menu_button" data-act="add-cool" ${cols.length ? '' : 'disabled'}>Add cooldown</button></div>
         <div class="srb-row srb-b-evopts">
             ${field('Losses ignore the per-turn cap from', select(`${P}.bypassCapFrom`, ev.bypassCapFrom || '', sevOpts))}
             ${field('Goes in the journal from', select(`${P}.journalFrom`, ev.journalFrom || '', sevOpts))}
@@ -516,6 +544,21 @@ function apply(bind, el) {
             el.className = `text_pole ${cellClass(v)}`;
             return false;
         }
+        if (f === 'cool') {
+            const mid = parts[3], what = parts[4];
+            ev.cooldown = ev.cooldown || {};
+            const cur = ev.cooldown[mid];
+            const o = typeof cur === 'object' && cur ? cur : { turns: cur ?? 3, cap: 0 };
+            if (what === 'meter') {
+                if (v === mid) return false;
+                if (v in ev.cooldown) { flash(`This event already has a cooldown on ${labelOf(v)}.`, 'warn'); return true; }
+                ev.cooldown = renameKey({ ...ev.cooldown, [mid]: o }, mid, v);
+                return true;
+            }
+            o[what] = v;
+            ev.cooldown[mid] = o;
+            return false;
+        }
         if (f === 'always') { if (v) ev.always = true; else delete ev.always; return false; }
         if (f === 'bypassCapFrom' || f === 'journalFrom') { if (v) ev[f] = v; else delete ev[f]; return false; }
         ev[f] = v;
@@ -592,6 +635,19 @@ async function onClick(e) {
         markDirty(); dropMeter(r, m.id); sel = { kind: 'book' };
     }
     else if (act === 'delete-event') { markDirty(); delete r.events[sel.id]; flash(`Deleted the ${words(sel.id)} event. Nothing is saved until you press Save.`); sel = { kind: 'book' }; }
+    else if (act === 'add-cool') {
+        const ev = r.events[sel.id];
+        const free = (r.meters || []).find(m => !(m.id in (ev.cooldown || {})));
+        if (!free) { flash('Every meter already has a cooldown on this event.', 'warn'); return; }
+        markDirty();
+        ev.cooldown = { ...(ev.cooldown || {}), [free.id]: { turns: 3, cap: 0 } };
+    }
+    else if (act === 'remove-cool') {
+        const ev = r.events[sel.id];
+        markDirty();
+        delete ev.cooldown[b.dataset.id];
+        if (!Object.keys(ev.cooldown).length) delete ev.cooldown;
+    }
     else if (act === 'add-level') {
         const m = meterById(sel.id), { hi, froms, lo } = levelInfo(m);
         const top = froms.length ? froms[froms.length - 1] : (lo ?? 0);

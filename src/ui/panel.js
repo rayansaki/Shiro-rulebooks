@@ -116,6 +116,7 @@ export function renderPanel() {
                 </div>
                 <div class="srb-track">${bi ? '<div class="srb-mid"></div>' : ''}<div class="srb-fill" style="left:${left}%;width:${width}%;background:${esc(m.color || 'var(--srb-accent)')}"></div></div>
                 ${locked ? `<div class="srb-hint">Unlocks when ${esc(gateMeter?.label || m.gate.meter)} reaches ${m.gate.min}</div>` : ''}
+                ${!locked && at.state.cool?.[m.id]?.left > 0 ? `<div class="srb-hint"><i class="fa-solid fa-snowflake"></i> Cooling down: ${at.state.cool[m.id].cap ? `rises at most ${at.state.cool[m.id].cap} a turn` : 'can\'t rise'} for the next ${at.state.cool[m.id].left === 1 ? 'turn' : `${at.state.cool[m.id].left} turns`}</div>` : ''}
             </div>`;
     }).join('');
 

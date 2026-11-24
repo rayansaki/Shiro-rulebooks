@@ -108,6 +108,7 @@ Levels are listed by where they start (`from`); the last one runs to `max`. Inst
 Optional, per meter (for fast-moving meters like arousal):
 
 - `gainCap`, `softZone`, `levelMargin`: override the rulebook's `limits` for this meter (`softZone: 0` turns off the slowdown near the ends).
+- `cooldown` (on an event): `{ "arousal": { "turns": 3, "cap": 0 } }` stops that meter rising by more than `cap` a turn for the next `turns` judged turns after the event (0 blocks gains entirely). Drops and drifting back still apply; a new cooldown only replaces a running one if it lasts longer. A plain number (`{ "arousal": 3 }`) means that many turns with no gains. Removing or swapping the event on its chip removes its cooldown.
 - `fade`: `{ "amount": 10, "to": 0, "after": 3 }` moves the meter towards `to` by `amount` on each judged turn once it has gone more than `after` turns in a row without any event touching it (so with `after: 3` the first fade comes on the 4th quiet turn). Any event that touches the meter resets the count. Leave `after` out (or 0) to fade on every quiet turn. For time jumps, add an event like `time_skip` that lowers the meter directly.
 - Replies with no text (for example a reply that only called an image tool) are never judged, so they don't count as a turn.
 - `transient: true`: a state of the moment rather than a trait. The note always describes its current level (even its starting level, since the card's opening scene doesn't cover it later on) and says just the level ("Arousal (Warm)") instead of "began X, now Y".
@@ -117,7 +118,7 @@ Optional, per event:
 - An effect of `"=N"` sets the meter to N instead of changing it (applied after other changes that turn), e.g. `"arousal": "=0"` for a climax.
 - `always: true`: the judge scores it whenever it happens, whoever starts it, even when it fits the character's current level (the "expected behaviour isn't news" rule doesn't apply).
 
-`rulebooks/` has ready-made rulebooks to import: **Slice of life + arousal** (Trust, Respect, Hate ↔ Love, Sub ↔ Dom, and a fast Arousal meter that starts fading after 3 quiet turns, drops on time skips, and resets on the character's climax).
+`rulebooks/` has ready-made rulebooks to import: **Slice of life + arousal** (Trust, Respect, Hate ↔ Love, Sub ↔ Dom, and a fast Arousal meter that starts fading after 3 quiet turns, drops on time skips, and resets on the character's climax, with a 3-turn cooldown before it can build again).
 
 ## Where things are stored
 

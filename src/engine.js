@@ -68,6 +68,17 @@ export function validateRulebook(input) {
                 if (!Number.isFinite(Number(d)) && parseSet(d) === null) errors.push(`Event "${key}", ${sev}: the change for "${mid}" must be a number, or "=N" to set it to N.`);
             }
         }
+        if (ev.cooldown !== undefined) {
+            if (!ev.cooldown || typeof ev.cooldown !== 'object' || Array.isArray(ev.cooldown)) { errors.push(`Event "${key}": "cooldown" must be an object of meter ids.`); ev.cooldown = {}; }
+            for (const [mid, c] of Object.entries(ev.cooldown)) {
+                const turns = Math.floor(Number(typeof c === 'object' && c ? c.turns : c));
+                const cap = Number(typeof c === 'object' && c ? (c.cap ?? 0) : 0);
+                if (!ids.has(mid)) errors.push(`Event "${key}": its cooldown is on an unknown meter "${mid}".`);
+                if (!(turns >= 1)) errors.push(`Event "${key}": the cooldown on "${mid}" needs "turns" of 1 or more.`);
+                if (!(Number.isFinite(cap) && cap >= 0)) errors.push(`Event "${key}": the cooldown cap on "${mid}" must be a number of 0 or more.`);
+                ev.cooldown[mid] = { turns, cap };
+            }
+        }
         if (ev.bypassCapFrom && !SEVERITIES.includes(ev.bypassCapFrom)) errors.push(`Event "${key}": "bypassCapFrom" must be one of ${SEVERITIES.join(', ')}.`);
         if (ev.journalFrom && !SEVERITIES.includes(ev.journalFrom)) errors.push(`Event "${key}": "journalFrom" must be one of ${SEVERITIES.join(', ')}.`);
     }
@@ -115,7 +126,7 @@ export function levelWithMargin(meter, value, currentName, margin) {
 
 /** Builds a full state from values, computing levels without a margin. */
 export function makeState(rb, values = {}, prev = null) {
-    const state = { values: {}, levels: {}, unlocked: {}, quiet: { ...(prev?.quiet || {}) } };
+    const state = { values: {}, levels: {}, unlocked: {}, quiet: { ...(prev?.quiet || {}) }, cool: { ...(prev?.cool || {}) } };
     for (const m of rb.meters) {
         const v = Number.isFinite(Number(values[m.id])) ? Number(values[m.id]) : (prev?.values?.[m.id] ?? m.start);
         state.values[m.id] = clamp(v, m.min, m.max);
@@ -141,6 +152,7 @@ export function normalizeState(rb, state, fallback = null) {
         if (state?.unlocked?.[m.id]) s.unlocked[m.id] = true;
     }
     s.quiet = { ...(state?.quiet || {}) };
+    s.cool = { ...(state?.cool || {}) };
     return s;
 }
 
@@ -174,7 +186,8 @@ export function softFactor(meter, value, delta, softZone) {
  * Per meter: `gainCap`, `softZone` and `levelMargin` override the rulebook's limits; an effect of
  * "=N" sets the meter to N (the last one wins, after other changes); `fade` moves a meter towards
  * `fade.to` by `fade.amount` once it has gone more than `fade.after` judged turns in a row without
- * any event touching it.
+ * any event touching it. An event's `cooldown` ({ meter: { turns, cap } }) limits how much that
+ * meter can rise per turn, to `cap`, for the next `turns` judged turns (drops and drift still apply).
  */
 export function applyTurn(rb, before, events) {
     const lim = rb.limits;
@@ -214,6 +227,9 @@ export function applyTurn(rb, before, events) {
         if (capped) normal = Math.sign(normal) * cap;
         let next = locked ? old : clamp(round1(old + normal + pm.bypass), m.min, m.max);
         if (!locked && pm.set !== null) next = clamp(pm.set, m.min, m.max);
+        const cd = before.cool?.[m.id];
+        let cooled = 0;
+        if (!locked && cd?.left > 0 && next > old + cd.cap) { cooled = round1(next - (old + cd.cap)); next = round1(old + cd.cap); }
         let faded = 0;
         const quiet = pm.touched ? 0 : (before.quiet?.[m.id] ?? 0) + 1;
         if (!locked && !pm.touched && m.fade && quiet > m.fade.after && old !== m.fade.to) {
@@ -223,7 +239,7 @@ export function applyTurn(rb, before, events) {
         }
         values[m.id] = next;
         meters[m.id] = {
-            old, next, nominal: pm.normal, bypass: pm.bypass, set: pm.set, faded, quiet, factor: round1(factor), capped, locked: !!locked,
+            old, next, nominal: pm.normal, bypass: pm.bypass, set: pm.set, faded, quiet, cooled, coolLeft: cd?.left > 0 ? cd.left : 0, factor: round1(factor), capped, locked: !!locked,
             scale: pm.normal ? normal / pm.normal : 1,
         };
     }
@@ -242,12 +258,35 @@ export function applyTurn(rb, before, events) {
             if (!mm.locked) a.deltas[mid] = round1(mm.next - mm.old);
         }
     }
+    // A cooldown takes its blocked amount out of the turn's gains, in proportion.
+    for (const [mid, mm] of Object.entries(meters)) {
+        if (!mm.cooled || mm.set !== null) continue;
+        const gains = applied.filter(a => a.deltas?.[mid] > 0);
+        const total = gains.reduce((t, a) => t + a.deltas[mid], 0);
+        if (!total) continue;
+        const keep = Math.max(0, total - mm.cooled) / total;
+        for (const a of gains) { a.deltas[mid] = round1(a.deltas[mid] * keep); a.cooled = true; }
+    }
 
     const state = makeState(rb, values, before);
     state.quiet = Object.fromEntries(rb.meters.filter(m => m.fade).map(m => [m.id, meters[m.id].quiet]));
+    // Cooldowns: running ones count down; this turn's events start new ones (the later end wins).
+    const cool = {};
+    for (const m of rb.meters) { const c = before.cool?.[m.id]; if (c?.left > 1) cool[m.id] = { left: c.left - 1, cap: c.cap }; }
+    const started = {};
+    for (const a of applied) {
+        if (a.cancelled) continue;
+        for (const [mid, c] of Object.entries(rb.events[a.type]?.cooldown || {})) {
+            if (!meters[mid] || !(c.turns >= 1)) continue;
+            const cur = cool[mid];
+            if (!cur || c.turns > cur.left || (c.turns === cur.left && c.cap < cur.cap)) { cool[mid] = { left: c.turns, cap: c.cap }; started[mid] = cool[mid]; }
+        }
+    }
+    state.cool = cool;
     for (const m of rb.meters) meters[m.id].level = state.levels[m.id];
     const fades = Object.fromEntries(Object.entries(meters).filter(([, x]) => x.faded).map(([id, x]) => [id, x.faded]));
-    return { state, applied, meters, fades };
+    const cooled = Object.fromEntries(Object.entries(meters).filter(([, x]) => x.cooled).map(([id, x]) => [id, { blocked: x.cooled, left: x.coolLeft - 1 }]));
+    return { state, applied, meters, fades, cooled, cooling: started };
 }
 
 /**
