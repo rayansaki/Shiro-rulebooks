@@ -208,29 +208,43 @@ function isChatCompletion(profileId) {
     } catch { return false; }
 }
 
-/** Sends messages through a connection profile, using only its API, model and key. */
-export async function callModel(profileId, messages, { maxTokens, temperature, reasoning, signal } = {}) {
+const EFFORT = { off: 'none', minimal: 'minimal', low: 'low' };
+const DEFAULT_MAX_TOKENS = 4000;
+
+/**
+ * Sends messages through a connection profile, using only its API, model and key.
+ * Each attempt is added to `log` (for the trace).
+ */
+export async function callModel(profileId, messages, { maxTokens, temperature, reasoning, signal, log = [], note } = {}) {
     if (!profileId) throw new Error('Choose a judge model in the Rulebook settings.');
     const svc = ctx().ConnectionManagerRequestService;
     if (!svc) throw new Error('The Connection Manager extension is needed for the judge.');
     const prompt = svc.constructPrompt(messages, profileId);
+    const max = Number(maxTokens) || DEFAULT_MAX_TOKENS;
     const payload = { temperature: Number(temperature ?? 0.2) };
-    const chat = isChatCompletion(profileId);
-    if (chat && reasoning === 'off') Object.assign(payload, { reasoning_effort: 'none', include_reasoning: false });
-    if (chat && reasoning === 'low') Object.assign(payload, { reasoning_effort: 'low', include_reasoning: false });
+    if (isChatCompletion(profileId) && EFFORT[reasoning]) Object.assign(payload, { reasoning_effort: EFFORT[reasoning], include_reasoning: false });
     const opts = { stream: false, extractData: true, includePreset: false, includeInstruct: true, signal };
-    const send = async (p) => {
-        const res = await svc.sendRequest(profileId, prompt, Number(maxTokens) || 1024, opts, p);
-        return typeof res === 'string' ? res : String(res?.content ?? '');
+    const send = async (p, note) => {
+        const entry = { at: Date.now(), reasoning: p.reasoning_effort || 'model default', maxTokens: max, note };
+        log.push(entry);
+        try {
+            const res = await svc.sendRequest(profileId, prompt, max, opts, p);
+            const text = typeof res === 'string' ? res : String(res?.content ?? '');
+            entry.chars = text.length;
+            return text;
+        } catch (err) {
+            entry.error = errText(err);
+            throw err;
+        }
     };
     try {
-        return await send(payload);
+        return await send(payload, note);
     } catch (err) {
         if (signal?.aborted) throw err;
-        // Some providers refuse a reasoning setting; try once without it.
-        if (payload.reasoning_effort) {
+        // Only when the provider rejects the reasoning setting itself: try once without it.
+        if (payload.reasoning_effort && /reason|effort|thinking/i.test(errText(err))) {
             const { reasoning_effort: _r, include_reasoning: _i, ...rest } = payload;
-            return await send(rest);
+            return await send(rest, `The provider refused reasoning "${payload.reasoning_effort}", so this attempt used the model's default.`);
         }
         throw err;
     }
@@ -238,39 +252,46 @@ export async function callModel(profileId, messages, { maxTokens, temperature, r
 
 const errText = (err) => err?.cause?.message || err?.message || String(err);
 
-/** Calls the model and parses JSON, retrying once with a nudge if asked. */
+const CUT_OFF = 'The answer was cut off before the JSON ended, probably because the model reasoned despite the Reasoning setting (thinking counts towards the limit). Raise Max tokens in the Rulebook settings, or use a model or provider that honours "Off".';
+
+/**
+ * Calls the model and parses JSON. A malformed answer is retried once with a nudge
+ * (if `retry`); a cut-off answer isn't, because it would be cut off again.
+ */
 async function callForJson(profileId, messages, opts, retry) {
     let raw = await callModel(profileId, messages, opts);
     try {
         return { raw, json: extractJson(raw) };
     } catch (err) {
+        if (err.message.includes('incomplete')) throw Object.assign(new Error(CUT_OFF), { raw });
         if (!retry) throw Object.assign(new Error(`The answer wasn't valid JSON: ${err.message}`), { raw });
         const again = [...messages, { role: 'assistant', content: raw }, { role: 'user', content: 'That was not valid JSON. Reply with the JSON object only, nothing else.' }];
-        raw = await callModel(profileId, again, opts);
+        raw = await callModel(profileId, again, { ...opts, note: 'Retry after an answer that wasn\'t valid JSON.' });
         try {
             return { raw, json: extractJson(raw) };
         } catch (err2) {
+            if (err2.message.includes('incomplete')) throw Object.assign(new Error(CUT_OFF), { raw });
             throw Object.assign(new Error(`The answer wasn't valid JSON, twice: ${err2.message}`), { raw });
         }
     }
 }
 
-export async function judge({ rb, messages, prevEventCount, signal }) {
+export async function judge({ rb, messages, prevEventCount, signal, log = [] }) {
     const s = settings().judge;
     try {
-        const { raw, json } = await callForJson(s.profileId, messages, { maxTokens: s.maxTokens, temperature: s.temperature, reasoning: s.reasoning, signal }, s.retry);
+        const { raw, json } = await callForJson(s.profileId, messages, { maxTokens: s.maxTokens, temperature: s.temperature, reasoning: s.reasoning, signal, log }, s.retry);
         return { raw, verdict: cleanVerdict(rb, json, prevEventCount) };
     } catch (err) {
         throw Object.assign(new Error(errText(err)), { raw: err.raw });
     }
 }
 
-export async function assess(rb) {
+export async function assess(rb, log = []) {
     const s = settings();
     const profileId = s.assess.profileId || s.judge.profileId;
     const messages = await buildAssessMessages(rb);
     try {
-        const { raw, json } = await callForJson(profileId, messages, { maxTokens: 1500, temperature: 0.3, reasoning: s.judge.reasoning }, true);
+        const { raw, json } = await callForJson(profileId, messages, { maxTokens: s.judge.maxTokens, temperature: 0.3, reasoning: s.judge.reasoning, log }, s.judge.retry);
         return { raw, messages, values: cleanAssessment(rb, json) };
     } catch (err) {
         throw Object.assign(new Error(errText(err)), { raw: err.raw, messages });

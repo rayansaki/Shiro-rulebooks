@@ -239,7 +239,7 @@ export const DEFAULT_STRIP = [
 ].join('\n');
 
 export const DEFAULT_SETTINGS = {
-    version: 1,
+    version: 2,
     enabled: true,
     autoOpenWindow: true,
     showChips: true,
@@ -247,9 +247,9 @@ export const DEFAULT_SETTINGS = {
     assignments: {},          // character avatar -> rulebook id
     judge: {
         profileId: '',
-        reasoning: 'off',     // off | low | default
+        reasoning: 'off',     // off | minimal | low | default
         temperature: 0.2,
-        maxTokens: 1024,
+        maxTokens: 4000,      // for the judge and the assessment; thinking counts towards it
         defaultContext: 'full', // full | lean
         retry: true,
         includeCard: true,

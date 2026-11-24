@@ -53,7 +53,7 @@ Needs SillyTavern 1.19 or later, with the built-in **Connection Manager** extens
 
 ## Setup
 
-1. **Make a connection profile for the judge**, for example GLM 5.3 Flash on OpenRouter. Only its API, model and key are used. The judge always uses the extension's own prompt, temperature (0.2 by default) and reasoning setting, never the profile's preset.
+1. **Make a connection profile for the judge**, for example Gemini 3.8 Flash or GLM 5.3 Flash on OpenRouter. Only its API, model and key are used. The judge always uses the extension's own prompt, temperature (0.2 by default), reasoning setting and token limit, never the profile's preset.
 2. **Pick it** in Extensions → Rulebook → Judge → Model.
 3. **Assign a rulebook to a character** under "Which rulebook each character uses", or attach one to any chat from the Rulebook window (wand menu → Rulebook, or `/rulebook`).
 4. **Starting a new chat** with an assigned character attaches the rulebook and asks the assessor where the character starts. You can adjust each value before the chat starts.
@@ -108,7 +108,7 @@ Levels are listed by where they start (`from`); the last one runs to `max`. Inst
 - One-to-one chats only (no group chats).
 - Rulebooks are edited as JSON.
 - Only the newest judged turn's chips can be changed by hand.
-- "Reasoning: Off" asks the provider for no reasoning. If a provider refuses that, the judge retries once without the setting.
+- **Reasoning:** Off, Minimal, Low or Model default. Off asks the provider for no reasoning, but some providers think anyway (seen with GLM 5.3 Flash via Relace), and some models can only reduce it (Gemini 3.8 Flash still used about 1,100 hidden tokens with Off). Thinking counts towards **Max tokens** (default 4,000, shared by the judge and the assessment), so leave plenty of headroom: the answer itself is about 50 tokens for the judge and a few hundred for the assessment. A cut-off answer shows a clear error and isn't retried. If a provider rejects the reasoning setting outright, the call is retried once without it, and the trace says so.
 
 ## Development
 

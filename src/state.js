@@ -25,6 +25,10 @@ export function settings() {
     if (!es[KEY] || typeof es[KEY] !== 'object') es[KEY] = {};
     const s = mergeDefaults(es[KEY], DEFAULT_SETTINGS);
     if (!Object.keys(s.library).length) s.library[SLOW_BURN.id] = structuredClone(SLOW_BURN);
+    if ((s.version ?? 1) < 2) {
+        if (Number(s.judge.maxTokens) === 1024) s.judge.maxTokens = 4000;
+        s.version = 2;
+    }
     return s;
 }
 

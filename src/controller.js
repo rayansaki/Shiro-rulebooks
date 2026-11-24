@@ -110,12 +110,12 @@ async function judgeMessage(index, signal) {
     const prev = findSnapBefore(index);
     const prevEligible = !!prev && prev.index === lastReplyBefore(index);
     const base = prev ? normalizeState(rb, prev.snap.after, start) : start;
-    const trace = { kind: 'judge', at: Date.now(), index, mode, model: profileLabel(settings().judge.profileId) };
+    const trace = { kind: 'judge', at: Date.now(), index, mode, model: profileLabel(settings().judge.profileId), attempts: [] };
 
     try {
         const messages = await buildJudgeMessages({ rb, index, mode, prev, base, prevEligible });
         trace.messages = messages;
-        const { raw, verdict } = await judge({ rb, messages, prevEventCount: prevEligible ? prev.snap.events.length : 0, signal });
+        const { raw, verdict } = await judge({ rb, messages, prevEventCount: prevEligible ? prev.snap.events.length : 0, signal, log: trace.attempts });
         trace.raw = raw;
         trace.verdict = verdict;
         if (c.getCurrentChatId() !== chatId || c.chat[index] !== msg || fingerprint(msg) !== fp) {
@@ -224,15 +224,17 @@ export async function runAssessment() {
     status.assessing = true;
     status.assessError = '';
     emit('change');
+    const attempts = [];
+    const model = profileLabel(settings().assess.profileId || settings().judge.profileId);
     try {
-        const r = await assess(rb);
-        status.lastTrace = { kind: 'assessment', at: Date.now(), messages: r.messages, raw: r.raw, values: r.values, model: profileLabel(settings().assess.profileId || settings().judge.profileId) };
+        const r = await assess(rb, attempts);
+        status.lastTrace = { kind: 'assessment', at: Date.now(), messages: r.messages, raw: r.raw, values: r.values, model, attempts };
         if (settings().assess.confirm) emit('assessed', { values: r.values });
         else await applyValues(r.values);
     } catch (err) {
         console.error('[Rulebook] Assessment failed', err);
         status.assessError = err.message;
-        status.lastTrace = { kind: 'assessment', at: Date.now(), messages: err.messages, raw: err.raw, error: err.message };
+        status.lastTrace = { kind: 'assessment', at: Date.now(), messages: err.messages, raw: err.raw, error: err.message, model, attempts };
     } finally {
         status.assessing = false;
         emit('change');
