@@ -185,7 +185,8 @@ export function applyTurn(rb, before, events) {
     for (const ev of events || []) {
         if (ev.cancelled) { applied.push({ ...ev, deltas: {}, sets: {} }); continue; }
         const eff = eventEffect(rb, ev);
-        if (!eff) continue;
+        // Kept even when it changes nothing at this severity, so chips and revisions keep their place.
+        if (!eff) { applied.push({ ...ev, bypass: false, nominal: {}, sets: {}, deltas: {} }); continue; }
         const by = bypasses(rb, ev);
         const nominal = {}, sets = {};
         for (const [mid, d] of Object.entries(eff)) {

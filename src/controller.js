@@ -181,7 +181,13 @@ export async function overrideEvent(index, eventIndex, action) {
     const ev = snap.events[eventIndex];
     if (!ev) return;
     if (action === 'remove') ev.cancelled = true;
-    else { ev.originalSeverity = ev.originalSeverity || ev.severity; ev.severity = action; ev.cancelled = false; }
+    else if (String(action).startsWith('type:')) {
+        const type = String(action).slice(5);
+        if (!rb.events[type]) return;
+        if (type !== ev.type) { ev.originalType = ev.originalType || ev.type; ev.type = type; }
+        if (ev.originalType === ev.type) delete ev.originalType;
+        ev.cancelled = false;
+    } else { ev.originalSeverity = ev.originalSeverity || ev.severity; ev.severity = action; ev.cancelled = false; }
     ev.userEdited = true;
     const result = applyTurn(rb, normalizeState(rb, snap.before, startState(rb)), snap.events);
     snap.after = result.state;

@@ -7,6 +7,7 @@ import { esc } from './window.js';
 const mesEl = (index) => document.querySelector(`#chat .mes[mesid="${index}"]`);
 
 const labelOf = (rb, id) => rb.meters.find(m => m.id === id)?.label || id;
+const words = (id) => { const s = String(id || '').replace(/_/g, ' ').trim(); return s ? s[0].toUpperCase() + s.slice(1) : id; };
 
 function deltaText(rb, deltas, sets = {}) {
     const parts = Object.entries(deltas || {}).filter(([id, d]) => d && !(id in sets)).map(([id, d]) => {
@@ -22,9 +23,9 @@ function eventChip(rb, ev, i, { editable, revised }) {
     const cancelled = r?.cancelled || ev.cancelled;
     const reratedFrom = r && !r.cancelled && r.severity !== ev.severity ? ev.severity : (ev.originalSeverity && ev.originalSeverity !== ev.severity ? ev.originalSeverity : '');
     const sev = r && !r.cancelled ? r.severity : ev.severity;
-    const title = r?.revisedReason ? `Revised next turn: ${r.revisedReason}` : (ev.userEdited ? 'Changed by you' : '');
+    const title = r?.revisedReason ? `Revised next turn: ${r.revisedReason}` : (ev.userEdited ? `Changed by you${ev.originalType ? ` (the judge said ${words(ev.originalType)})` : ''}` : '');
     const cls = ['srb-chip', cancelled ? 'srb-cancelled' : '', editable ? 'srb-editable' : '', (ev.deltas && Object.values(ev.deltas).some(d => d < 0)) ? 'srb-neg' : 'srb-pos'].join(' ');
-    const inner = `${esc(deltaText(rb, ev.deltas, ev.sets))} · ${esc(ev.reason || ev.type)} <span class="srb-sev">(${esc(sev)}${reratedFrom ? `, was ${esc(reratedFrom)}` : ''}${ev.capped ? ', capped' : ''})</span>${r ? ' <span class="srb-sev">revised</span>' : ''}`;
+    const inner = `${esc(deltaText(rb, ev.deltas, ev.sets))} · ${esc(ev.reason || ev.type)} <span class="srb-sev">(${esc(sev)}${reratedFrom ? `, was ${esc(reratedFrom)}` : ''}${ev.originalType ? ', event changed' : ''}${ev.capped ? ', capped' : ''})</span>${r ? ' <span class="srb-sev">revised</span>' : ''}`;
     return editable
         ? `<button type="button" class="${cls}" data-ev="${i}" title="${esc(title || 'Tap to change')}">${inner}</button>`
         : `<span class="${cls}" title="${esc(title)}">${inner}</span>`;
@@ -53,7 +54,7 @@ export function renderChips(index) {
         if (!chips.length) chips.push('<span class="srb-chip srb-muted">Nothing scored this turn</span>');
         if (snap.revise?.events?.length) chips.push('<span class="srb-chip srb-muted" title="See the previous reply">Revised the previous turn</span>');
         if (snap.manual) chips.push('<span class="srb-chip srb-muted">Adjusted by hand</span>');
-        if (editable && snap.events.length) chips.push('<span class="srb-hint srb-chip-hint">Tap a chip to change its severity or remove it</span>');
+        if (editable && snap.events.length) chips.push('<span class="srb-hint srb-chip-hint">Tap a chip to change its event or severity, or remove it</span>');
         box.innerHTML = chips.join('');
     }
     const text = el.querySelector('.mes_text');
@@ -69,8 +70,16 @@ export function renderAllChips() {
     });
 }
 
-/** Tap handling: opens a severity menu on an editable chip, or retries a failed judgement. */
+/** Tap handling: opens an event and severity menu on an editable chip, or retries a failed judgement. */
 export function bindChipClicks() {
+    document.addEventListener('change', (e) => {
+        const sel = e.target.closest('.srb-chip-menu select[data-type-for]');
+        if (!sel) return;
+        const box = sel.closest('.srb-chips');
+        const ev = Number(sel.dataset.typeFor);
+        box.querySelector('.srb-chip-menu')?.remove();
+        overrideEvent(Number(box.dataset.index), ev, `type:${sel.value}`);
+    });
     document.addEventListener('click', async (e) => {
         const box = e.target.closest('.srb-chips');
         if (!box) return;
@@ -90,7 +99,11 @@ export function bindChipClicks() {
         const menu = document.createElement('div');
         menu.className = 'srb-chip-menu';
         menu.dataset.ev = ev;
-        menu.innerHTML = SEVERITIES.map(s => `<button type="button" class="menu_button" data-pick="${s}" data-ev="${ev}">${s}</button>`).join('')
+        const rb = chatRulebook();
+        const cur = chipModel(index)?.snap?.events?.[Number(ev)]?.type;
+        const types = Object.keys(rb?.events || {});
+        menu.innerHTML = `<label class="srb-chip-type"><span>Event</span><select class="text_pole" data-type-for="${ev}">${types.map(t => `<option value="${esc(t)}" ${t === cur ? 'selected' : ''}>${esc(words(t))}</option>`).join('')}</select></label>`
+            + SEVERITIES.map(s => `<button type="button" class="menu_button" data-pick="${s}" data-ev="${ev}">${s}</button>`).join('')
             + `<button type="button" class="menu_button srb-danger" data-pick="remove" data-ev="${ev}">Remove</button>`;
         box.appendChild(menu);
     });

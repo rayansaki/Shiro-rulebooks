@@ -345,3 +345,6 @@
     .srb-b-main { overflow: visible; }
     .srb-b-grid2, .srb-b-grid3 { grid-template-columns: minmax(0, 1fr); }
 }
+
+.srb-chip-type { display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--srb-muted); flex-basis: 100%; }
+.srb-chip-type select { margin: 0; width: auto; max-width: 100%; min-width: 180px; color: var(--srb-text); }

@@ -76,7 +76,7 @@ All windows can be dragged by their header and resized from any edge or corner. 
   - Changes stay as unsaved edits until **Save**, which won't save a rulebook with problems. **Undo changes** goes back to the saved version. Renaming a meter's ID updates every event, unlock rule and the status line; deleting a meter removes its effects everywhere. Importing a rulebook with the same name or ID offers to replace the existing one.
 - **Trace:** the last judgement or assessment: the prompt sent, the raw answer, the events, any revision, and the maths for each meter.
 
-**Chips** under each judged reply show what changed and why (`Trust −3 · lied about the milk (trivial)`), in whole numbers (the maths keeps the exact values). On the newest judged turn you can tap a chip to change its severity or remove it.
+**Chips** under each judged reply show what changed and why (`Trust −3 · lied about the milk (trivial)`), in whole numbers (the maths keeps the exact values). On the newest judged turn you can tap a chip to swap it for a different event, change its severity, or remove it; the maths is redone.
 
 ## Rulebook format
 
