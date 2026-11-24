@@ -19,6 +19,10 @@ export async function createSettings(h) {
     (document.getElementById('extensions_settings2') || document.getElementById('extensions_settings'))?.appendChild(tpl.firstElementChild);
     bind();
     renderSettings();
+    try {
+        const m = await (await fetch(new URL('../../manifest.json', import.meta.url))).json();
+        $id('srb_version').textContent = `v${m.version}`;
+    } catch { /* the version label is optional */ }
 }
 
 function bindCheck(id, get, set) {
@@ -81,9 +85,9 @@ function bind() {
 
 export function renderSettings() {
     if (!$id('srb_settings')) return;
-    renderProfiles();
-    renderLibrary();
-    renderCharacters();
+    for (const part of [renderProfiles, renderLibrary, renderCharacters]) {
+        try { part(); } catch (err) { console.error('[Rulebook] Settings render failed', err); }
+    }
 }
 
 function renderProfiles() {

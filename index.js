@@ -26,6 +26,11 @@ function openSettingsDrawer() {
 }
 
 async function onChatChanged() {
+    try { await chatChanged(); } catch (err) { console.error(`${LOG} chat change failed`, err); }
+    renderSettings();
+}
+
+async function chatChanged() {
     status.errors.clear();
     status.pending.clear();
     const s = settings();
@@ -45,7 +50,6 @@ async function onChatChanged() {
     }
     updateInjection();
     refreshAll();
-    renderSettings();
 }
 
 function addMenuButton() {

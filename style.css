@@ -249,3 +249,8 @@
 .srb-char-row select { margin: 0; }
 .srb-char-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #srb_char_search { margin: 6px 0; }
+
+/* SillyTavern's display rules (e.g. .menu_button { display: flex }) override the hidden attribute. */
+.srb-settings [hidden],
+.srb-window [hidden],
+.srb-chips [hidden] { display: none !important; }
