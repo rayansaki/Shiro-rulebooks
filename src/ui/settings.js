@@ -59,6 +59,8 @@ function bind() {
     // Profiles can be created while the page is open: refresh the lists when they're opened.
     ['srb_judge_profile', 'srb_assess_profile'].forEach(id => $id(id).addEventListener('focus', renderProfiles));
 
+    // The character list may not be loaded when the drawer is first built: redraw on opening it.
+    document.querySelector('#srb_settings .inline-drawer-toggle')?.addEventListener('click', () => setTimeout(renderSettings, 0));
     $id('srb_open_window').addEventListener('click', () => hooks.openWindow());
     $id('srb_new').addEventListener('click', () => hooks.openEditor(null));
     $id('srb_import_btn').addEventListener('click', () => $id('srb_import').click());

@@ -127,6 +127,7 @@ jQuery(async () => {
         eventSource.on(et.MESSAGE_UPDATED, (i) => renderChips(Number(i)));
         eventSource.on(et.MORE_MESSAGES_LOADED, renderAllChips);
         if (et.CHAT_DELETED) eventSource.on(et.CHAT_DELETED, refreshAll);
+        if (et.APP_READY) eventSource.on(et.APP_READY, renderSettings);
 
         if (panel().wasOpen() && isSoloChat()) panel().open();
         if (startDialog().isOpen) startDialog().close();
