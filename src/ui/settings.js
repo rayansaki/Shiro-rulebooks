@@ -71,6 +71,7 @@ function bind() {
         const avatar = e.target.dataset.assign;
         if (e.target.value) s.assignments[avatar] = e.target.value; else delete s.assignments[avatar];
         saveSettings();
+        renderLibrary();
         renderCharacters();
         hooks.changed();
     });

@@ -45,6 +45,7 @@ async function onChatChanged() {
     }
     updateInjection();
     refreshAll();
+    renderSettings();
 }
 
 function addMenuButton() {
