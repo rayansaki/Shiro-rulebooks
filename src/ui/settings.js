@@ -1,7 +1,7 @@
 // The settings drawer in Extensions.
 import { validateRulebook } from '../engine.js';
 import { DEFAULT_SETTINGS } from '../defaults.js';
-import { ctx, settings, saveSettings, newRulebookId } from '../state.js';
+import { ctx, settings, saveSettings } from '../state.js';
 import { profiles } from '../judge.js';
 import { esc } from './window.js';
 
@@ -10,7 +10,7 @@ let showAllAssigned = false;
 
 const $id = (id) => document.getElementById(id);
 
-/** hooks: { openWindow, openEditor, changed } */
+/** hooks: { openWindow, openBuilder, changed } */
 export async function createSettings(h) {
     hooks = h;
     const res = await fetch(new URL('../../settings.html', import.meta.url));
@@ -66,10 +66,7 @@ function bind() {
     // The character list may not be loaded when the drawer is first built: redraw on opening it.
     document.querySelector('#srb_settings .inline-drawer-toggle')?.addEventListener('click', () => setTimeout(renderSettings, 0));
     $id('srb_open_window').addEventListener('click', () => hooks.openWindow());
-    $id('srb_new').addEventListener('click', () => hooks.openEditor(null));
-    $id('srb_import_btn').addEventListener('click', () => $id('srb_import').click());
-    $id('srb_import').addEventListener('change', importFile);
-    $id('srb_library').addEventListener('click', onLibraryClick);
+    $id('srb_open_builder').addEventListener('click', () => hooks.openBuilder());
     $id('srb_char_search').addEventListener('input', renderCharacters);
     $id('srb_char_all').addEventListener('click', () => { showAllAssigned = !showAllAssigned; renderCharacters(); });
     $id('srb_settings').addEventListener('change', (e) => {
@@ -102,89 +99,11 @@ function renderProfiles() {
     a.value = list.some(p => p.id === s.assess.profileId) ? s.assess.profileId : '';
 }
 
-function usedBy(id) {
-    const s = settings();
-    const chars = ctx().characters || [];
-    return Object.entries(s.assignments).filter(([, r]) => r === id).map(([av]) => chars.find(c => c.avatar === av)?.name).filter(Boolean);
-}
-
 function renderLibrary() {
-    const lib = settings().library;
-    $id('srb_library').innerHTML = Object.entries(lib).map(([id, rb]) => {
-        const { errors } = validateRulebook(rb);
-        const users = usedBy(id);
-        const meta = `${(rb.meters || []).length} meters · ${Object.keys(rb.events || {}).length} events · ${users.length ? `used by ${esc(users.slice(0, 3).join(', '))}${users.length > 3 ? ` and ${users.length - 3} more` : ''}` : 'not assigned'}`;
-        return `<div class="srb-lib-row" data-id="${esc(id)}">
-            <div class="srb-lib-text"><div class="srb-strong">${esc(rb.name || id)}</div><div class="srb-hint">${meta}${errors.length ? ' · <span class="srb-warn">has problems</span>' : ''}</div></div>
-            <div class="srb-row">
-                <button type="button" class="menu_button" data-lib="edit">Edit</button>
-                <button type="button" class="menu_button" data-lib="duplicate">Duplicate</button>
-                <button type="button" class="menu_button" data-lib="export">Export</button>
-                <button type="button" class="menu_button srb-danger" data-lib="delete" ${Object.keys(lib).length < 2 ? 'disabled title="Keep at least one rulebook"' : ''}>Delete</button>
-            </div></div>`;
-    }).join('');
-}
-
-async function onLibraryClick(e) {
-    const btn = e.target.closest('[data-lib]');
-    if (!btn) return;
-    const id = btn.closest('[data-id]').dataset.id;
-    const s = settings();
-    const rb = s.library[id];
-    const act = btn.dataset.lib;
-    if (act === 'edit') return hooks.openEditor(id);
-    if (act === 'duplicate') {
-        const copy = structuredClone(rb);
-        copy.name = `Copy of ${rb.name || id}`;
-        copy.id = newRulebookId(copy.name);
-        s.library[copy.id] = copy;
-    }
-    if (act === 'export') {
-        const blob = new Blob([JSON.stringify(rb, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `${id}.rulebook.json`;
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-        return;
-    }
-    if (act === 'delete') {
-        const users = usedBy(id);
-        const ok = await ctx().Popup.show.confirm('Delete rulebook?', `"${esc(rb.name || id)}" will be removed from the library${users.length ? ` and unassigned from ${esc(users.join(', '))}` : ''}. Chats that use it will stop judging until you attach another.`);
-        if (!ok) return;
-        delete s.library[id];
-        for (const [av, r] of Object.entries(s.assignments)) if (r === id) delete s.assignments[av];
-    }
-    saveSettings();
-    renderSettings();
-    hooks.changed();
-}
-
-async function importFile(e) {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    try {
-        if (file.size > 2 * 1024 * 1024) throw new Error('The file is over 2 MB.');
-        const json = JSON.parse(await file.text());
-        const { errors } = validateRulebook(json);
-        const s = settings();
-        // Same id or name as one in the library: offer to replace it, so chats using it keep working.
-        const existing = Object.entries(s.library).find(([id, r]) => (json.id && id === json.id) || (json.name && r.name === json.name));
-        let replace = false;
-        if (existing) {
-            replace = !!(await ctx().Popup.show.confirm('Replace the existing rulebook?', `"${esc(existing[1].name || existing[0])}" is already in your library. Replace it with this file? Chats that use it keep working and switch to the new version. Choose No to import it as a separate copy.`));
-        }
-        json.id = replace ? existing[0] : newRulebookId(json.name || file.name.replace(/\.json$/i, ''));
-        s.library[json.id] = json;
-        saveSettings();
-        renderSettings();
-        hooks.changed();
-        if (errors.length) { toastr.warning(`Imported "${json.name || json.id}" with ${errors.length} problem(s). Open it in the editor to fix them.`); hooks.openEditor(json.id); }
-        else toastr.success(replace ? `Replaced "${json.name}"` : `Imported "${json.name}"`);
-    } catch (err) {
-        toastr.error(`Could not import: ${err.message}`);
-    }
+    const lib = Object.values(settings().library);
+    const broken = lib.filter(rb => validateRulebook(rb).errors.length).length;
+    const names = lib.map(rb => esc(rb.name || rb.id));
+    $id('srb_library').innerHTML = `${lib.length} in your library${names.length ? `: ${names.slice(0, 4).join(', ')}${names.length > 4 ? ` and ${names.length - 4} more` : ''}` : ''}.${broken ? ` <span class="srb-warn">${broken} with problems.</span>` : ''}`;
 }
 
 function charRow(ch) {

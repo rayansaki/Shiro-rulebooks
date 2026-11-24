@@ -1,7 +1,6 @@
-// Starting-point dialog, rulebook editor and trace window. All are movable and resizable.
-import { validateRulebook, fmtValue } from '../engine.js';
-import { SLOW_BURN } from '../defaults.js';
-import { ctx, settings, saveSettings, chatRulebook, newRulebookId, currentCharacter } from '../state.js';
+// Starting-point dialog and trace window. All are movable and resizable.
+import { fmtValue } from '../engine.js';
+import { ctx, settings, chatRulebook, currentCharacter } from '../state.js';
 import { status, applyValues, applyAssessment, runAssessment, dialogValues } from '../controller.js';
 import { FloatingWindow, esc } from './window.js';
 
@@ -81,82 +80,6 @@ export function openStartDialog({ baseline = null, current = null, fresh = false
             <button type="button" class="menu_button srb-primary" data-act="apply">${startState.mode === 'adjust' ? 'Apply' : 'Start with these'}</button>
         </div>`;
     startWin.open();
-}
-
-// ---------- rulebook editor ----------
-
-let editWin = null;
-let editId = null;
-let onLibraryChange = () => {};
-
-export function createEditor(onChange) {
-    onLibraryChange = onChange;
-    editWin = new FloatingWindow({ id: 'editor', title: 'Edit rulebook', width: 640, height: 680, minWidth: 320, minHeight: 280 });
-    editWin.body.classList.add('srb-editor');
-    editWin.body.addEventListener('click', (e) => {
-        const act = e.target.closest('[data-act]')?.dataset.act;
-        if (act === 'check') check();
-        if (act === 'save') save();
-        if (act === 'format') format();
-        if (act === 'close') editWin.close();
-    });
-    return editWin;
-}
-
-const area = () => editWin.body.querySelector('textarea');
-const report = (html, ok = false) => { const el = editWin.body.querySelector('[data-role="report"]'); el.innerHTML = html; el.classList.toggle('srb-warn', !ok); };
-
-function parse() {
-    try { return { json: JSON.parse(area().value) }; } catch (err) { return { error: `Not valid JSON: ${esc(err.message)}` }; }
-}
-
-function check() {
-    const p = parse();
-    if (p.error) return report(p.error), null;
-    const { errors } = validateRulebook(p.json);
-    if (errors.length) return report(`<b>${errors.length} problem${errors.length > 1 ? 's' : ''}:</b><ul>${errors.map(e => `<li>${esc(e)}</li>`).join('')}</ul>`), null;
-    report('No problems found.', true);
-    return p.json;
-}
-
-function format() {
-    const p = parse();
-    if (p.json) area().value = JSON.stringify(p.json, null, 2);
-    else report(p.error);
-}
-
-function save() {
-    const json = check();
-    if (!json) return;
-    const lib = settings().library;
-    const id = editId || newRulebookId(json.name);
-    json.id = id;
-    lib[id] = json;
-    editId = id;
-    saveSettings();
-    report(`Saved as "${esc(json.name)}".`, true);
-    editWin.setTitle('Edit rulebook', json.name);
-    onLibraryChange();
-}
-
-/** Opens the editor for a library rulebook, or for a new one (a copy of Slow burn) when id is null. */
-export function openEditor(id = null) {
-    const lib = settings().library;
-    editId = id && lib[id] ? id : null;
-    const source = editId ? lib[editId] : { ...structuredClone(SLOW_BURN), id: undefined, name: 'New rulebook' };
-    editWin.setTitle('Edit rulebook', source.name);
-    editWin.body.innerHTML = `
-        <div class="srb-hint">The rulebook as JSON: meters with their levels and instructions, events with what each severity changes, and limits. A visual editor comes later. <b>Check</b> lists any problems; a rulebook with problems can't be saved.</div>
-        <textarea class="text_pole srb-json" spellcheck="false" aria-label="Rulebook JSON"></textarea>
-        <div data-role="report" class="srb-hint"></div>
-        <div class="srb-row srb-end">
-            <button type="button" class="menu_button" data-act="format">Tidy</button>
-            <button type="button" class="menu_button" data-act="check">Check</button>
-            <button type="button" class="menu_button" data-act="close">Close</button>
-            <button type="button" class="menu_button srb-primary" data-act="save">Save</button>
-        </div>`;
-    area().value = JSON.stringify(source, null, 2);
-    editWin.open();
 }
 
 // ---------- trace ----------

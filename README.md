@@ -2,7 +2,7 @@
 
 Slow-burn relationship meters for SillyTavern. A character stuck in "mean mode" because their card says so can actually warm up, earn trust, fall in love, or turn on you, one turn at a time.
 
-**Status: first prototype (0.1.0).** It works end to end, but expect rough edges. Rulebooks are edited as JSON for now; a visual editor comes later.
+**Status: first prototype (0.1.0).** It works end to end, but expect rough edges.
 
 ## How it works
 
@@ -68,7 +68,12 @@ All windows can be dragged by their header and resized from any edge or corner. 
 - **Rulebook:** an on/off switch for the chat, Lean or Full judge context, the meters with this turn's changes, the status, a preview of the note, and buttons to re-judge the last turn, show the trace, adjust values, edit the rulebook or detach it.
 - **Starting point:** the assessment to confirm, with a slider and the assessor's reason for each meter (Card and Now side by side for a chat already under way).
 - **Adjust values:** change the current values by hand. The starting point stays as it was.
-- **Edit rulebook:** the rulebook as JSON, with a Check that lists any problems in plain words.
+- **Rulebook builder:** makes, edits, imports, exports and deletes rulebooks. Open it from the wand menu (**Rulebook builder**), the **Edit rulebook** button in the Rulebook window, the settings drawer, or `/rulebook builder`.
+  - **Overview:** name, the meter shown in the status line, the limits, and a live list of problems.
+  - **Meters:** name, ID, colour, range and fallback start, a bar of the levels across the range, when it becomes available (from the start, or once another meter reaches a value), drifting back after quiet turns, the fast-meter option, per-meter limits, and the levels with their instructions.
+  - **Events:** searchable; what the judge is told, a table of what each severity does to each meter (a column per meter in the rulebook; numbers, or `=N` to set), the cap and journal thresholds and **Always counts**.
+  - **JSON:** the rulebook exactly as stored; edit or paste it and Apply.
+  - Changes stay as unsaved edits until **Save**, which won't save a rulebook with problems. **Undo changes** goes back to the saved version. Renaming a meter's ID updates every event, unlock rule and the status line; deleting a meter removes its effects everywhere. Importing a rulebook with the same name or ID offers to replace the existing one.
 - **Trace:** the last judgement or assessment: the prompt sent, the raw answer, the events, any revision, and the maths for each meter.
 
 **Chips** under each judged reply show what changed and why (`Trust −3 · lied about the milk (trivial)`), in whole numbers (the maths keeps the exact values). On the newest judged turn you can tap a chip to change its severity or remove it.
@@ -123,7 +128,6 @@ Optional, per event:
 ## Known limits of this prototype
 
 - One-to-one chats only (no group chats).
-- Rulebooks are edited as JSON.
 - Only the newest judged turn's chips can be changed by hand.
 - **Reasoning:** Off, Minimal, Low or Model default. Off asks the provider for no reasoning, but some providers think anyway (seen with GLM 5.3 Flash via Relace), and some models can only reduce it (Gemini 3.8 Flash still used about 1,100 hidden tokens with Off). Thinking counts towards **Max tokens** (default 5,000, shared by the judge and the assessment), so leave plenty of headroom: the answer itself is about 50 tokens for the judge and a few hundred for the assessment. A cut-off answer shows a clear error and isn't retried. If a provider rejects the reasoning setting outright, the call is retried once without it, and the trace says so.
 

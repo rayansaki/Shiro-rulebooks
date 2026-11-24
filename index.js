@@ -5,7 +5,8 @@ import {
     setEnabled, rejudgeLatest, runAssessment,
 } from './src/controller.js';
 import { createPanel, renderPanel, panel } from './src/ui/panel.js';
-import { createStartDialog, openStartDialog, createEditor, openEditor, createTrace, openTrace, renderTrace, startDialog } from './src/ui/dialogs.js';
+import { createStartDialog, openStartDialog, createTrace, openTrace, renderTrace, startDialog } from './src/ui/dialogs.js';
+import { createBuilder, openBuilder, libraryChanged } from './src/ui/builder.js';
 import { renderChips, renderAllChips, bindChipClicks } from './src/ui/chips.js';
 import { createSettings, renderSettings } from './src/ui/settings.js';
 
@@ -61,6 +62,12 @@ function addMenuButton() {
     item.innerHTML = '<div class="fa-solid fa-scale-balanced extensionsMenuExtensionButton"></div><span>Rulebook</span>';
     item.addEventListener('click', () => { panel().open(); renderPanel(); });
     menu.appendChild(item);
+    const b = document.createElement('div');
+    b.id = 'srb_wand_builder';
+    b.className = 'list-group-item flex-container flexGap5';
+    b.innerHTML = '<div class="fa-solid fa-pen-ruler extensionsMenuExtensionButton"></div><span>Rulebook builder</span>';
+    b.addEventListener('click', () => openBuilder(chatMeta()?.rulebookId));
+    menu.appendChild(b);
 }
 
 function registerCommand() {
@@ -69,12 +76,12 @@ function registerCommand() {
     if (!SlashCommandParser?.addCommandObject) return;
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'rulebook',
-        helpString: 'Rulebook: <code>/rulebook</code> or <code>/rulebook open</code> opens the window; also <code>close</code>, <code>on</code>, <code>off</code> (for this chat), <code>rejudge</code> (the last reply) and <code>reassess</code> (the starting point).',
+        helpString: 'Rulebook: <code>/rulebook</code> or <code>/rulebook open</code> opens the window; also <code>close</code>, <code>on</code>, <code>off</code> (for this chat), <code>rejudge</code> (the last reply), <code>reassess</code> (the starting point) and <code>builder</code> (the rulebook builder).',
         unnamedArgumentList: [SlashCommandArgument.fromProps({
-            description: 'open, close, on, off, rejudge or reassess',
+            description: 'open, close, on, off, rejudge, reassess or builder',
             typeList: [ARGUMENT_TYPE.STRING],
             isRequired: false,
-            enumList: ['open', 'close', 'on', 'off', 'rejudge', 'reassess'],
+            enumList: ['open', 'close', 'on', 'off', 'rejudge', 'reassess', 'builder'],
         })],
         callback: async (_args, value) => {
             const v = String(value || 'open').trim().toLowerCase();
@@ -83,6 +90,7 @@ function registerCommand() {
             else if (v === 'on' || v === 'off') { if (chatMeta()) await setEnabled(v === 'on'); }
             else if (v === 'rejudge') await rejudgeLatest();
             else if (v === 'reassess') { if (chatMeta()) await runAssessment(); }
+            else if (v === 'builder') openBuilder(chatMeta()?.rulebookId);
             return '';
         },
     }));
@@ -93,17 +101,17 @@ jQuery(async () => {
         settings();
         createPanel({
             openStart: (o) => openStartDialog(o),
-            openEditor: (id) => openEditor(id),
+            openEditor: (id) => openBuilder(id),
             openTrace: () => openTrace(),
             openSettings: () => openSettingsDrawer(),
         });
         createStartDialog();
-        createEditor(() => { renderSettings(); refreshAll(); });
+        createBuilder(() => { renderSettings(); updateInjection(); refreshAll(); });
         createTrace();
         await createSettings({
             openWindow: () => { panel().open(); renderPanel(); },
-            openEditor: (id) => openEditor(id),
-            changed: () => { updateInjection(); refreshAll(); },
+            openBuilder: (id) => openBuilder(id),
+            changed: () => { libraryChanged(); updateInjection(); refreshAll(); },
         });
         addMenuButton();
         registerCommand();
