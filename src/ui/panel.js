@@ -148,12 +148,12 @@ export function renderPanel() {
             <button type="button" class="menu_button" data-act="edit">Edit rulebook</button>
         </div>
         <button type="button" class="menu_button srb-wide" data-act="reassess">Reassess the starting point</button>
-        <button type="button" class="srb-link" data-act="detach">Detach rulebook from this chat</button>
+        <button type="button" class="srb-link" data-act="detach">Detach rulebook from this chat (permanent)</button>
         ${detachConfirm()}`;
 }
 
 function detachConfirm() {
     if (!confirmDetach) return '';
-    return `<div class="srb-notice">Detach the rulebook? The meters stop and the note is removed. Snapshots stay in the messages but won't be used if you attach again.
-        <div class="srb-row"><button type="button" class="menu_button" data-act="detach-no">Keep it</button><button type="button" class="menu_button srb-danger" data-act="detach-yes">Detach</button></div></div>`;
+    return `<div class="srb-notice"><b>Detach permanently?</b> This chat's rulebook, starting point and values are deleted, and the judging and the note stop. Attaching a rulebook again starts over with a new assessment.<br>To pause instead, use the On/Off switch at the top: nothing is lost, and the meters carry on when you switch it back on.
+        <div class="srb-row"><button type="button" class="menu_button" data-act="detach-no">Keep it</button><button type="button" class="menu_button srb-danger" data-act="detach-yes">Detach permanently</button></div></div>`;
 }
