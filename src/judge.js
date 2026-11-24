@@ -241,16 +241,27 @@ export async function callModel(profileId, messages, { maxTokens, temperature, r
         return await send(payload, note);
     } catch (err) {
         if (signal?.aborted) throw err;
-        // Only when the provider rejects the reasoning setting itself: try once without it.
-        if (payload.reasoning_effort && /reason|effort|thinking/i.test(errText(err))) {
+        // When the provider rejects the reasoning setting (or just says "Bad Request", which is all
+        // SillyTavern passes on), try once without it. Refused requests aren't billed.
+        if (payload.reasoning_effort && /reason|effort|thinking|bad request/i.test(errText(err))) {
             const { reasoning_effort: _r, include_reasoning: _i, ...rest } = payload;
-            return await send(rest, `The provider refused reasoning "${payload.reasoning_effort}", so this attempt used the model's default.`);
+            try {
+                return await send(rest, `Retried without the reasoning setting ("${payload.reasoning_effort}") after the first call was refused.`);
+            } catch (err2) {
+                throw explainRefusal(err2);
+            }
         }
-        throw err;
+        throw explainRefusal(err);
     }
 }
 
 const errText = (err) => err?.cause?.message || err?.message || String(err);
+
+/** SillyTavern only passes on "Bad Request"; the provider's reason is in its server log. */
+function explainRefusal(err) {
+    if (!/^bad request$/i.test(errText(err).trim())) return err;
+    return new Error('Bad Request: the provider refused the request. SillyTavern only passes on that label; the reason is in SillyTavern\'s server log (search it for "Chat completion request error"). Common causes: a setting the model or provider doesn\'t accept, or a provider-side content filter on the prompt.');
+}
 
 const CUT_OFF = 'The answer was cut off before the JSON ended, probably because the model reasoned despite the Reasoning setting (thinking counts towards the limit). Raise Max tokens in the Rulebook settings, or use a model or provider that honours "Off".';
 
