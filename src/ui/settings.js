@@ -169,12 +169,19 @@ async function importFile(e) {
         const json = JSON.parse(await file.text());
         const { errors } = validateRulebook(json);
         const s = settings();
-        json.id = newRulebookId(json.name || file.name.replace(/\.json$/i, ''));
+        // Same id or name as one in the library: offer to replace it, so chats using it keep working.
+        const existing = Object.entries(s.library).find(([id, r]) => (json.id && id === json.id) || (json.name && r.name === json.name));
+        let replace = false;
+        if (existing) {
+            replace = !!(await ctx().Popup.show.confirm('Replace the existing rulebook?', `"${esc(existing[1].name || existing[0])}" is already in your library. Replace it with this file? Chats that use it keep working and switch to the new version. Choose No to import it as a separate copy.`));
+        }
+        json.id = replace ? existing[0] : newRulebookId(json.name || file.name.replace(/\.json$/i, ''));
         s.library[json.id] = json;
         saveSettings();
         renderSettings();
+        hooks.changed();
         if (errors.length) { toastr.warning(`Imported "${json.name || json.id}" with ${errors.length} problem(s). Open it in the editor to fix them.`); hooks.openEditor(json.id); }
-        else toastr.success(`Imported "${json.name}"`);
+        else toastr.success(replace ? `Replaced "${json.name}"` : `Imported "${json.name}"`);
     } catch (err) {
         toastr.error(`Could not import: ${err.message}`);
     }

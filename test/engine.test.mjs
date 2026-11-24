@@ -200,6 +200,23 @@ test('fade only applies on a turn when nothing touched the meter', () => {
     assert.equal(applyTurn(frb, makeState(frb, { arousal: 4 }), []).state.values.arousal, 0, 'never fades past its target');
 });
 
+test('fade can wait for several quiet turns, and any touch resets the count', () => {
+    const drb = validateRulebook({
+        ...frb,
+        meters: frb.meters.map(m => m.id === 'arousal' ? { ...m, fade: { amount: 10, to: 0, after: 3 } } : m),
+    }).rulebook;
+    let s = makeState(drb, { arousal: 60 });
+    const seen = [];
+    for (let i = 0; i < 5; i++) { const r = applyTurn(drb, s, []); s = r.state; seen.push(s.values.arousal); }
+    assert.deepEqual(seen, [60, 60, 60, 50, 40], 'first fade on the 4th quiet turn');
+    s = applyTurn(drb, s, [{ type: 'kiss', severity: 'serious' }]).state;
+    assert.equal(s.quiet.arousal, 0, 'a touch resets the quiet count');
+    const v = s.values.arousal;
+    s = applyTurn(drb, s, []).state;
+    assert.equal(s.values.arousal, v, 'no fade straight after a touch');
+    assert.equal(normalizeState(drb, s).quiet.arousal, 1, 'the count survives normalising');
+});
+
 test('a meter can have its own level margin', () => {
     let s = makeState(frb, { arousal: 36 });
     assert.equal(s.levels.arousal, 'Warm');

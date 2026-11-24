@@ -37,7 +37,7 @@ export function validateRulebook(input) {
         }
         if (m.fade !== undefined) {
             if (!m.fade || !(Number(m.fade.amount) > 0)) errors.push(`${where}: "fade" needs an "amount" above 0.`);
-            else m.fade = { amount: Number(m.fade.amount), to: clamp(Number(m.fade.to ?? m.min), m.min, m.max) };
+            else m.fade = { amount: Number(m.fade.amount), to: clamp(Number(m.fade.to ?? m.min), m.min, m.max), after: Math.max(0, Math.floor(Number(m.fade.after ?? 0)) || 0) };
         }
         if (!Array.isArray(m.levels) || !m.levels.length) { errors.push(`${where} needs at least one level.`); m.levels = []; }
         m.levels.forEach((l, j) => {
@@ -115,7 +115,7 @@ export function levelWithMargin(meter, value, currentName, margin) {
 
 /** Builds a full state from values, computing levels without a margin. */
 export function makeState(rb, values = {}, prev = null) {
-    const state = { values: {}, levels: {}, unlocked: {} };
+    const state = { values: {}, levels: {}, unlocked: {}, quiet: { ...(prev?.quiet || {}) } };
     for (const m of rb.meters) {
         const v = Number.isFinite(Number(values[m.id])) ? Number(values[m.id]) : (prev?.values?.[m.id] ?? m.start);
         state.values[m.id] = clamp(v, m.min, m.max);
@@ -140,6 +140,7 @@ export function normalizeState(rb, state, fallback = null) {
         }
         if (state?.unlocked?.[m.id]) s.unlocked[m.id] = true;
     }
+    s.quiet = { ...(state?.quiet || {}) };
     return s;
 }
 
@@ -172,7 +173,8 @@ export function softFactor(meter, value, delta, softZone) {
  * actually made per meter, and `meters` explains each meter's maths (for the trace).
  * Per meter: `gainCap`, `softZone` and `levelMargin` override the rulebook's limits; an effect of
  * "=N" sets the meter to N (the last one wins, after other changes); `fade` moves a meter towards
- * `fade.to` by `fade.amount` on a turn when no event touched it.
+ * `fade.to` by `fade.amount` once it has gone more than `fade.after` judged turns in a row without
+ * any event touching it.
  */
 export function applyTurn(rb, before, events) {
     const lim = rb.limits;
@@ -212,14 +214,15 @@ export function applyTurn(rb, before, events) {
         let next = locked ? old : clamp(round1(old + normal + pm.bypass), m.min, m.max);
         if (!locked && pm.set !== null) next = clamp(pm.set, m.min, m.max);
         let faded = 0;
-        if (!locked && !pm.touched && m.fade && old !== m.fade.to) {
+        const quiet = pm.touched ? 0 : (before.quiet?.[m.id] ?? 0) + 1;
+        if (!locked && !pm.touched && m.fade && quiet > m.fade.after && old !== m.fade.to) {
             const toward = old > m.fade.to ? -1 : 1;
             next = toward < 0 ? Math.max(m.fade.to, old - m.fade.amount) : Math.min(m.fade.to, old + m.fade.amount);
             faded = round1(next - old);
         }
         values[m.id] = next;
         meters[m.id] = {
-            old, next, nominal: pm.normal, bypass: pm.bypass, set: pm.set, faded, factor: round1(factor), capped, locked: !!locked,
+            old, next, nominal: pm.normal, bypass: pm.bypass, set: pm.set, faded, quiet, factor: round1(factor), capped, locked: !!locked,
             scale: pm.normal ? normal / pm.normal : 1,
         };
     }
@@ -240,6 +243,7 @@ export function applyTurn(rb, before, events) {
     }
 
     const state = makeState(rb, values, before);
+    state.quiet = Object.fromEntries(rb.meters.filter(m => m.fade).map(m => [m.id, meters[m.id].quiet]));
     for (const m of rb.meters) meters[m.id].level = state.levels[m.id];
     const fades = Object.fromEntries(Object.entries(meters).filter(([, x]) => x.faded).map(([id, x]) => [id, x.faded]));
     return { state, applied, meters, fades };

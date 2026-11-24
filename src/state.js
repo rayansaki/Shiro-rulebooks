@@ -116,9 +116,12 @@ export function clearSnap(index) {
     if (info?.extra) delete info.extra[SNAP];
 }
 
-/** A char reply that can be judged: not the user, not hidden or a system message. */
+/**
+ * A char reply that can be judged: not the user, not hidden or a system message, and with some
+ * text (a reply that only called a tool, such as an image generator, is empty).
+ */
 export function isReply(msg) {
-    return !!msg && !msg.is_user && !msg.is_system && typeof msg.mes === 'string';
+    return !!msg && !msg.is_user && !msg.is_system && typeof msg.mes === 'string' && msg.mes.trim().length > 0;
 }
 
 /**
@@ -142,7 +145,7 @@ export function snapMatches(s) {
 export function findSnapBefore(index) {
     const chat = ctx().chat;
     for (let i = Math.min(index, chat.length) - 1; i >= 0; i--) {
-        if (isPendingSwipe(chat[i])) continue;
+        if (isPendingSwipe(chat[i]) || !isReply(chat[i])) continue;
         const s = getSnap(chat[i]);
         if (snapMatches(s)) return { index: i, snap: s };
     }
@@ -153,7 +156,7 @@ export function findSnapBefore(index) {
 export function findSnapAfter(index) {
     const chat = ctx().chat;
     for (let i = index + 1; i < chat.length; i++) {
-        if (isPendingSwipe(chat[i])) continue;
+        if (isPendingSwipe(chat[i]) || !isReply(chat[i])) continue;
         const s = getSnap(chat[i]);
         if (snapMatches(s)) return { index: i, snap: s };
     }

@@ -17,11 +17,36 @@
       "start": 20,
       "color": "#6aa8ef",
       "levels": [
-        { "from": 0, "name": "Distrustful", "status": "Guarded", "instruction": "{{char}} doesn't believe what {{user}} says without proof and keeps anything personal back." },
-        { "from": 20, "name": "Wary", "status": "Wary", "instruction": "{{char}} gives {{user}} the benefit of the doubt on small things, but nothing that matters." },
-        { "from": 40, "name": "Cautious", "status": "Testing", "instruction": "{{char}} is starting to rely on {{user}} for small things and quietly checks whether it's deserved." },
-        { "from": 60, "name": "Trusting", "status": "Trusting", "instruction": "{{char}} takes {{user}} at their word and shares things {{char}} wouldn't tell most people." },
-        { "from": 85, "name": "Complete trust", "status": "All in", "instruction": "{{char}} trusts {{user}} completely, with secrets, fears and safety." }
+        {
+          "from": 0,
+          "name": "Distrustful",
+          "status": "Guarded",
+          "instruction": "{{char}} doesn't believe what {{user}} says without proof and keeps anything personal back."
+        },
+        {
+          "from": 20,
+          "name": "Wary",
+          "status": "Wary",
+          "instruction": "{{char}} gives {{user}} the benefit of the doubt on small things, but nothing that matters."
+        },
+        {
+          "from": 40,
+          "name": "Cautious",
+          "status": "Testing",
+          "instruction": "{{char}} is starting to rely on {{user}} for small things and quietly checks whether it's deserved."
+        },
+        {
+          "from": 60,
+          "name": "Trusting",
+          "status": "Trusting",
+          "instruction": "{{char}} takes {{user}} at their word and shares things {{char}} wouldn't tell most people."
+        },
+        {
+          "from": 85,
+          "name": "Complete trust",
+          "status": "All in",
+          "instruction": "{{char}} trusts {{user}} completely, with secrets, fears and safety."
+        }
       ]
     },
     {
@@ -32,11 +57,36 @@
       "start": 40,
       "color": "#d9b45a",
       "levels": [
-        { "from": 0, "name": "Contempt", "status": "Contempt", "instruction": "{{char}} looks down on {{user}}: dismisses {{user}}'s opinions and doesn't take {{user}} seriously." },
-        { "from": 20, "name": "Unimpressed", "status": "Unimpressed", "instruction": "{{char}} isn't impressed by {{user}} and expects little; {{user}} has to prove things." },
-        { "from": 40, "name": "Neutral", "status": "Neutral", "instruction": "{{char}} takes {{user}} at face value, neither impressed nor dismissive." },
-        { "from": 60, "name": "Respects", "status": "Respects", "instruction": "{{char}} respects {{user}}: listens, values {{user}}'s judgement and takes {{user}} seriously, even when they disagree." },
-        { "from": 85, "name": "Admires", "status": "Admires", "instruction": "{{char}} admires {{user}}, looks to {{user}} in hard moments and cares what {{user}} thinks of {{char}}." }
+        {
+          "from": 0,
+          "name": "Contempt",
+          "status": "Contempt",
+          "instruction": "{{char}} looks down on {{user}}: dismisses {{user}}'s opinions and doesn't take {{user}} seriously."
+        },
+        {
+          "from": 20,
+          "name": "Unimpressed",
+          "status": "Unimpressed",
+          "instruction": "{{char}} isn't impressed by {{user}} and expects little; {{user}} has to prove things."
+        },
+        {
+          "from": 40,
+          "name": "Neutral",
+          "status": "Neutral",
+          "instruction": "{{char}} takes {{user}} at face value, neither impressed nor dismissive."
+        },
+        {
+          "from": 60,
+          "name": "Respects",
+          "status": "Respects",
+          "instruction": "{{char}} respects {{user}}: listens, values {{user}}'s judgement and takes {{user}} seriously, even when they disagree."
+        },
+        {
+          "from": 85,
+          "name": "Admires",
+          "status": "Admires",
+          "instruction": "{{char}} admires {{user}}, looks to {{user}} in hard moments and cares what {{user}} thinks of {{char}}."
+        }
       ]
     },
     {
@@ -47,12 +97,42 @@
       "start": 0,
       "color": "#e57aa2",
       "levels": [
-        { "from": -100, "name": "Hates", "status": "Hostile", "instruction": "{{char}} hates {{user}} and wants as little to do with {{user}} as possible. Cold or hostile, never warm." },
-        { "from": -50, "name": "Dislikes", "status": "Cold", "instruction": "{{char}} dislikes {{user}}: short with {{user}}, quick to assume the worst and slow to forgive." },
-        { "from": -15, "name": "Neutral", "status": "Neutral", "instruction": "{{char}} has no strong feelings about {{user}} yet: polite or indifferent, depending on mood." },
-        { "from": 15, "name": "Likes", "status": "Friendly", "instruction": "{{char}} likes {{user}} and enjoys the company, though wouldn't make a fuss about it." },
-        { "from": 45, "name": "Cares deeply", "status": "Close", "instruction": "{{char}} cares about {{user}} a great deal: notices how {{user}} is doing, makes time for {{user}}, and is hurt by {{user}}'s indifference." },
-        { "from": 75, "name": "In love", "status": "In love", "instruction": "{{char}} is in love with {{user}}. It shows in how {{char}} looks at, waits for and worries about {{user}}; whether and how {{char}} says it is up to {{char}}." }
+        {
+          "from": -100,
+          "name": "Hates",
+          "status": "Hostile",
+          "instruction": "{{char}} hates {{user}} and wants as little to do with {{user}} as possible. Cold or hostile, never warm."
+        },
+        {
+          "from": -50,
+          "name": "Dislikes",
+          "status": "Cold",
+          "instruction": "{{char}} dislikes {{user}}: short with {{user}}, quick to assume the worst and slow to forgive."
+        },
+        {
+          "from": -15,
+          "name": "Neutral",
+          "status": "Neutral",
+          "instruction": "{{char}} has no strong feelings about {{user}} yet: polite or indifferent, depending on mood."
+        },
+        {
+          "from": 15,
+          "name": "Likes",
+          "status": "Friendly",
+          "instruction": "{{char}} likes {{user}} and enjoys the company, though wouldn't make a fuss about it."
+        },
+        {
+          "from": 45,
+          "name": "Cares deeply",
+          "status": "Close",
+          "instruction": "{{char}} cares about {{user}} a great deal: notices how {{user}} is doing, makes time for {{user}}, and is hurt by {{user}}'s indifference."
+        },
+        {
+          "from": 75,
+          "name": "In love",
+          "status": "In love",
+          "instruction": "{{char}} is in love with {{user}}. It shows in how {{char}} looks at, waits for and worries about {{user}}; whether and how {{char}} says it is up to {{char}}."
+        }
       ]
     },
     {
@@ -63,11 +143,36 @@
       "start": 0,
       "color": "#9b8cf0",
       "levels": [
-        { "from": -100, "name": "Submissive", "status": "Follows", "instruction": "{{char}} looks to {{user}} to lead and is happiest following, deferring on decisions big and small." },
-        { "from": -50, "name": "Yielding", "status": "Gives way", "instruction": "{{char}} usually lets {{user}} decide and goes along with it, with the odd push of their own." },
-        { "from": -15, "name": "Even", "status": "Even", "instruction": "Neither leads: {{char}} and {{user}} decide things between them, and {{char}} pushes back as often as giving way." },
-        { "from": 15, "name": "Leads", "status": "Leads", "instruction": "{{char}} tends to take charge and expects to get their way, but lets {{user}} win small things." },
-        { "from": 50, "name": "In charge", "status": "In charge", "instruction": "{{char}} is firmly in charge with {{user}}: sets the terms, makes the decisions and expects to be followed." }
+        {
+          "from": -100,
+          "name": "Submissive",
+          "status": "Follows",
+          "instruction": "{{char}} looks to {{user}} to lead and is happiest following, deferring on decisions big and small."
+        },
+        {
+          "from": -50,
+          "name": "Yielding",
+          "status": "Gives way",
+          "instruction": "{{char}} usually lets {{user}} decide and goes along with it, with the odd push of their own."
+        },
+        {
+          "from": -15,
+          "name": "Even",
+          "status": "Even",
+          "instruction": "Neither leads: {{char}} and {{user}} decide things between them, and {{char}} pushes back as often as giving way."
+        },
+        {
+          "from": 15,
+          "name": "Leads",
+          "status": "Leads",
+          "instruction": "{{char}} tends to take charge and expects to get their way, but lets {{user}} win small things."
+        },
+        {
+          "from": 50,
+          "name": "In charge",
+          "status": "In charge",
+          "instruction": "{{char}} is firmly in charge with {{user}}: sets the terms, makes the decisions and expects to be followed."
+        }
       ]
     },
     {
@@ -81,13 +186,42 @@
       "softZone": 0,
       "levelMargin": 3,
       "transient": true,
-      "fade": { "amount": 10, "to": 0 },
+      "fade": {
+        "amount": 10,
+        "to": 0,
+        "after": 3
+      },
       "levels": [
-        { "from": 0, "name": "Calm", "status": "Calm", "instruction": "" },
-        { "from": 15, "name": "Aware", "status": "Aware", "instruction": "{{char}} is physically aware of {{user}} right now: notices closeness and touch more than usual. Small internal tells only; {{char}} doesn't act on it." },
-        { "from": 35, "name": "Warm", "status": "Flustered", "instruction": "{{char}} is flustered and warm around {{user}} right now: lingering looks, a flush, distracted thoughts. Shown in {{char}}'s own way; {{char}} only acts on it if the moment invites it." },
-        { "from": 60, "name": "Aroused", "status": "Aroused", "instruction": "{{char}} is clearly aroused right now: it's hard to think about anything else, and it shows in breath, touch and focus. How far {{char}} goes still depends on {{char}}'s personality and the moment." },
-        { "from": 85, "name": "Desperate", "status": "Desperate", "instruction": "{{char}} wants {{user}} urgently right now and can barely hide it. Restraint is thin, and it colours everything {{char}} does in the scene." }
+        {
+          "from": 0,
+          "name": "Calm",
+          "status": "Calm",
+          "instruction": ""
+        },
+        {
+          "from": 15,
+          "name": "Aware",
+          "status": "Aware",
+          "instruction": "{{char}} is physically aware of {{user}} right now: notices closeness and touch more than usual. Small internal tells only; {{char}} doesn't act on it."
+        },
+        {
+          "from": 35,
+          "name": "Warm",
+          "status": "Flustered",
+          "instruction": "{{char}} is flustered and warm around {{user}} right now: lingering looks, a flush, distracted thoughts. Shown in {{char}}'s own way; {{char}} only acts on it if the moment invites it."
+        },
+        {
+          "from": 60,
+          "name": "Aroused",
+          "status": "Aroused",
+          "instruction": "{{char}} is clearly aroused right now: it's hard to think about anything else, and it shows in breath, touch and focus. How far {{char}} goes still depends on {{char}}'s personality and the moment."
+        },
+        {
+          "from": 85,
+          "name": "Desperate",
+          "status": "Desperate",
+          "instruction": "{{char}} wants {{user}} urgently right now and can barely hide it. Restraint is thin, and it colours everything {{char}} does in the scene."
+        }
       ]
     }
   ],
@@ -97,74 +231,166 @@
       "bypassCapFrom": "severe",
       "journalFrom": "severe",
       "effects": {
-        "trivial": { "love": 2 },
-        "minor": { "love": 4, "trust": 2 },
-        "serious": { "love": 8, "trust": 5, "respect": 2 },
-        "severe": { "love": 15, "trust": 10, "respect": 5 }
+        "trivial": {
+          "love": 2
+        },
+        "minor": {
+          "love": 4,
+          "trust": 2
+        },
+        "serious": {
+          "love": 8,
+          "trust": 5,
+          "respect": 2
+        },
+        "severe": {
+          "love": 15,
+          "trust": 10,
+          "respect": 5
+        }
       }
     },
     "patience": {
       "description": "{{user}} stays kind or calm when {{char}} is rude, difficult or upset.",
       "effects": {
-        "trivial": { "love": 1 },
-        "minor": { "love": 2, "respect": 1 },
-        "serious": { "love": 4, "respect": 2, "trust": 1 },
-        "severe": { "love": 6, "respect": 3, "trust": 2 }
+        "trivial": {
+          "love": 1
+        },
+        "minor": {
+          "love": 2,
+          "respect": 1
+        },
+        "serious": {
+          "love": 4,
+          "respect": 2,
+          "trust": 1
+        },
+        "severe": {
+          "love": 6,
+          "respect": 3,
+          "trust": 2
+        }
       }
     },
     "quality_time": {
       "description": "{{char}} and {{user}} share a genuinely good moment together: laughing, a meal, a film, a long talk.",
       "effects": {
-        "trivial": { "love": 1 },
-        "minor": { "love": 2 },
-        "serious": { "love": 4, "trust": 1 },
-        "severe": { "love": 6, "trust": 2 }
+        "trivial": {
+          "love": 1
+        },
+        "minor": {
+          "love": 2
+        },
+        "serious": {
+          "love": 4,
+          "trust": 1
+        },
+        "severe": {
+          "love": 6,
+          "trust": 2
+        }
       }
     },
     "vulnerability": {
       "description": "{{user}} or {{char}} shares something personal or painful, and the other meets it with care.",
       "journalFrom": "serious",
       "effects": {
-        "trivial": { "trust": 1 },
-        "minor": { "trust": 3, "love": 2 },
-        "serious": { "trust": 6, "love": 4 },
-        "severe": { "trust": 10, "love": 6 }
+        "trivial": {
+          "trust": 1
+        },
+        "minor": {
+          "trust": 3,
+          "love": 2
+        },
+        "serious": {
+          "trust": 6,
+          "love": 4
+        },
+        "severe": {
+          "trust": 10,
+          "love": 6
+        }
       }
     },
     "kept_promise": {
       "description": "{{user}} follows through on something {{user}} said they would do for {{char}}.",
       "effects": {
-        "trivial": { "trust": 1 },
-        "minor": { "trust": 3, "respect": 1 },
-        "serious": { "trust": 6, "respect": 3 },
-        "severe": { "trust": 10, "respect": 5 }
+        "trivial": {
+          "trust": 1
+        },
+        "minor": {
+          "trust": 3,
+          "respect": 1
+        },
+        "serious": {
+          "trust": 6,
+          "respect": 3
+        },
+        "severe": {
+          "trust": 10,
+          "respect": 5
+        }
       }
     },
     "apology": {
       "description": "{{user}} sincerely apologises to {{char}} or makes amends for something {{user}} did.",
       "effects": {
-        "trivial": { "trust": 1 },
-        "minor": { "trust": 2, "love": 1 },
-        "serious": { "trust": 5, "love": 2, "respect": 1 },
-        "severe": { "trust": 8, "love": 3, "respect": 2 }
+        "trivial": {
+          "trust": 1
+        },
+        "minor": {
+          "trust": 2,
+          "love": 1
+        },
+        "serious": {
+          "trust": 5,
+          "love": 2,
+          "respect": 1
+        },
+        "severe": {
+          "trust": 8,
+          "love": 3,
+          "respect": 2
+        }
       }
     },
     "competence": {
       "description": "{{user}} handles something well in front of {{char}}: real skill, a good call, or keeping a cool head under pressure.",
       "effects": {
-        "trivial": { "respect": 1 },
-        "minor": { "respect": 3 },
-        "serious": { "respect": 6, "trust": 1 },
-        "severe": { "respect": 10, "trust": 2 }
+        "trivial": {
+          "respect": 1
+        },
+        "minor": {
+          "respect": 3
+        },
+        "serious": {
+          "respect": 6,
+          "trust": 1
+        },
+        "severe": {
+          "respect": 10,
+          "trust": 2
+        }
       }
     },
     "integrity": {
       "description": "{{user}} is honest when it costs something, does the right thing when it's hard, or stands their ground with {{char}} or others without being cruel.",
       "effects": {
-        "trivial": { "respect": 1 },
-        "minor": { "respect": 3, "trust": 1 },
-        "serious": { "respect": 6, "trust": 3 },
-        "severe": { "respect": 10, "trust": 5 }
+        "trivial": {
+          "respect": 1
+        },
+        "minor": {
+          "respect": 3,
+          "trust": 1
+        },
+        "serious": {
+          "respect": 6,
+          "trust": 3
+        },
+        "severe": {
+          "respect": 10,
+          "trust": 5
+        }
       }
     },
     "cowardice": {
@@ -172,19 +398,41 @@
       "bypassCapFrom": "serious",
       "journalFrom": "serious",
       "effects": {
-        "trivial": { "respect": -1 },
-        "minor": { "respect": -3 },
-        "serious": { "respect": -10, "trust": -3 },
-        "severe": { "respect": -25, "trust": -10, "love": -5 }
+        "trivial": {
+          "respect": -1
+        },
+        "minor": {
+          "respect": -3
+        },
+        "serious": {
+          "respect": -10,
+          "trust": -3
+        },
+        "severe": {
+          "respect": -25,
+          "trust": -10,
+          "love": -5
+        }
       }
     },
     "pettiness": {
       "description": "{{user}} is petty, spiteful, sulky or needlessly mean towards {{char}} or someone else in front of {{char}}.",
       "effects": {
-        "trivial": { "respect": -1 },
-        "minor": { "respect": -2, "love": -1 },
-        "serious": { "respect": -5, "love": -3 },
-        "severe": { "respect": -10, "love": -6 }
+        "trivial": {
+          "respect": -1
+        },
+        "minor": {
+          "respect": -2,
+          "love": -1
+        },
+        "serious": {
+          "respect": -5,
+          "love": -3
+        },
+        "severe": {
+          "respect": -10,
+          "love": -6
+        }
       }
     },
     "cruelty": {
@@ -192,10 +440,24 @@
       "bypassCapFrom": "serious",
       "journalFrom": "serious",
       "effects": {
-        "trivial": { "love": -1 },
-        "minor": { "love": -3, "trust": -2, "respect": -1 },
-        "serious": { "love": -10, "trust": -6, "respect": -4 },
-        "severe": { "love": -30, "trust": -15, "respect": -10 }
+        "trivial": {
+          "love": -1
+        },
+        "minor": {
+          "love": -3,
+          "trust": -2,
+          "respect": -1
+        },
+        "serious": {
+          "love": -10,
+          "trust": -6,
+          "respect": -4
+        },
+        "severe": {
+          "love": -30,
+          "trust": -15,
+          "respect": -10
+        }
       }
     },
     "dishonesty": {
@@ -203,10 +465,23 @@
       "bypassCapFrom": "serious",
       "journalFrom": "serious",
       "effects": {
-        "trivial": { "trust": -3 },
-        "minor": { "trust": -8, "respect": -2 },
-        "serious": { "trust": -30, "love": -15, "respect": -8 },
-        "severe": { "trust": -100, "love": -60, "respect": -30 }
+        "trivial": {
+          "trust": -3
+        },
+        "minor": {
+          "trust": -8,
+          "respect": -2
+        },
+        "serious": {
+          "trust": -30,
+          "love": -15,
+          "respect": -8
+        },
+        "severe": {
+          "trust": -100,
+          "love": -60,
+          "respect": -30
+        }
       }
     },
     "broken_promise": {
@@ -214,10 +489,23 @@
       "bypassCapFrom": "serious",
       "journalFrom": "serious",
       "effects": {
-        "trivial": { "trust": -2 },
-        "minor": { "trust": -5, "respect": -1 },
-        "serious": { "trust": -15, "respect": -5, "love": -5 },
-        "severe": { "trust": -35, "respect": -10, "love": -15 }
+        "trivial": {
+          "trust": -2
+        },
+        "minor": {
+          "trust": -5,
+          "respect": -1
+        },
+        "serious": {
+          "trust": -15,
+          "respect": -5,
+          "love": -5
+        },
+        "severe": {
+          "trust": -35,
+          "respect": -10,
+          "love": -15
+        }
       }
     },
     "rejection": {
@@ -225,76 +513,143 @@
       "bypassCapFrom": "serious",
       "journalFrom": "serious",
       "effects": {
-        "trivial": { "love": -1 },
-        "minor": { "love": -3, "trust": -1 },
-        "serious": { "love": -10, "trust": -4 },
-        "severe": { "love": -30, "trust": -10 }
+        "trivial": {
+          "love": -1
+        },
+        "minor": {
+          "love": -3,
+          "trust": -1
+        },
+        "serious": {
+          "love": -10,
+          "trust": -4
+        },
+        "severe": {
+          "love": -30,
+          "trust": -10
+        }
       }
     },
     "user_takes_charge": {
       "description": "{{user}} makes a decision or gives {{char}} a direction, and {{char}} goes along with it.",
       "effects": {
-        "trivial": { "dominance": -1 },
-        "minor": { "dominance": -3 },
-        "serious": { "dominance": -6 },
-        "severe": { "dominance": -10 }
+        "trivial": {
+          "dominance": -1
+        },
+        "minor": {
+          "dominance": -3
+        },
+        "serious": {
+          "dominance": -6
+        },
+        "severe": {
+          "dominance": -10
+        }
       }
     },
     "user_yields": {
       "description": "{{user}} gives way to what {{char}} wants or decides, or hands {{char}} control.",
       "effects": {
-        "trivial": { "dominance": 1 },
-        "minor": { "dominance": 3 },
-        "serious": { "dominance": 6 },
-        "severe": { "dominance": 10 }
+        "trivial": {
+          "dominance": 1
+        },
+        "minor": {
+          "dominance": 3
+        },
+        "serious": {
+          "dominance": 6
+        },
+        "severe": {
+          "dominance": 10
+        }
       }
     },
     "char_takes_charge": {
       "description": "{{char}} takes charge or insists on getting their way, when that goes beyond {{char}}'s current Sub ↔ Dom level.",
       "effects": {
-        "trivial": { "dominance": 1 },
-        "minor": { "dominance": 2 },
-        "serious": { "dominance": 4 },
-        "severe": { "dominance": 6 }
+        "trivial": {
+          "dominance": 1
+        },
+        "minor": {
+          "dominance": 2
+        },
+        "serious": {
+          "dominance": 4
+        },
+        "severe": {
+          "dominance": 6
+        }
       }
     },
     "char_yields": {
       "description": "{{char}} gives way or submits to {{user}} unprompted, when that goes beyond {{char}}'s current Sub ↔ Dom level.",
       "effects": {
-        "trivial": { "dominance": -1 },
-        "minor": { "dominance": -2 },
-        "serious": { "dominance": -4 },
-        "severe": { "dominance": -6 }
+        "trivial": {
+          "dominance": -1
+        },
+        "minor": {
+          "dominance": -2
+        },
+        "serious": {
+          "dominance": -4
+        },
+        "severe": {
+          "dominance": -6
+        }
       }
     },
     "teasing": {
       "description": "Flirting or teasing between {{char}} and {{user}} with a romantic or sexual undertone, from either of them. (trivial: a passing look or line; severe: sustained, charged teasing)",
       "always": true,
       "effects": {
-        "trivial": { "arousal": 5 },
-        "minor": { "arousal": 10 },
-        "serious": { "arousal": 15 },
-        "severe": { "arousal": 20 }
+        "trivial": {
+          "arousal": 5
+        },
+        "minor": {
+          "arousal": 10
+        },
+        "serious": {
+          "arousal": 15
+        },
+        "severe": {
+          "arousal": 20
+        }
       }
     },
     "sensual_touch": {
       "description": "Sensual physical contact between {{char}} and {{user}} that {{char}} welcomes: a lingering hand, an embrace with intent, a caress. Not kissing or sexual contact.",
       "always": true,
       "effects": {
-        "trivial": { "arousal": 10 },
-        "minor": { "arousal": 15 },
-        "serious": { "arousal": 20 },
-        "severe": { "arousal": 25 }
+        "trivial": {
+          "arousal": 10
+        },
+        "minor": {
+          "arousal": 15
+        },
+        "serious": {
+          "arousal": 20
+        },
+        "severe": {
+          "arousal": 25
+        }
       }
     },
     "kissing": {
       "description": "{{char}} and {{user}} kiss. (trivial: a peck; serious: a deep kiss; severe: a long, heated kiss)",
       "always": true,
       "effects": {
-        "trivial": { "arousal": 5 },
-        "minor": { "arousal": 10 },
-        "serious": { "arousal": 20 },
-        "severe": { "arousal": 25 }
+        "trivial": {
+          "arousal": 5
+        },
+        "minor": {
+          "arousal": 10
+        },
+        "serious": {
+          "arousal": 20
+        },
+        "severe": {
+          "arousal": 25
+        }
       }
     },
     "sexual_contact": {
@@ -302,40 +657,91 @@
       "always": true,
       "journalFrom": "severe",
       "effects": {
-        "trivial": { "arousal": 15 },
-        "minor": { "arousal": 20 },
-        "serious": { "arousal": 30 },
-        "severe": { "arousal": 40, "love": 2 }
+        "trivial": {
+          "arousal": 15
+        },
+        "minor": {
+          "arousal": 20
+        },
+        "serious": {
+          "arousal": 30
+        },
+        "severe": {
+          "arousal": 40,
+          "love": 2
+        }
       }
     },
     "char_climax": {
       "description": "{{char}} reaches orgasm. Only {{char}}'s, not {{user}}'s.",
       "always": true,
       "effects": {
-        "trivial": { "arousal": "=0" },
-        "minor": { "arousal": "=0" },
-        "serious": { "arousal": "=0" },
-        "severe": { "arousal": "=0" }
+        "trivial": {
+          "arousal": "=0"
+        },
+        "minor": {
+          "arousal": "=0"
+        },
+        "serious": {
+          "arousal": "=0"
+        },
+        "severe": {
+          "arousal": "=0"
+        }
       }
     },
     "user_climax": {
       "description": "{{user}} reaches orgasm and {{char}} witnesses or causes it. ({{char}}'s own orgasm is char_climax.)",
       "always": true,
       "effects": {
-        "trivial": { "arousal": 5 },
-        "minor": { "arousal": 5 },
-        "serious": { "arousal": 10 },
-        "severe": { "arousal": 15 }
+        "trivial": {
+          "arousal": 5
+        },
+        "minor": {
+          "arousal": 5
+        },
+        "serious": {
+          "arousal": 10
+        },
+        "severe": {
+          "arousal": 15
+        }
       }
     },
     "mood_killer": {
       "description": "Something kills the mood for {{char}}: an interruption, an argument, bad news, awkwardness, or {{user}} being off-putting.",
       "always": true,
       "effects": {
-        "trivial": { "arousal": -5 },
-        "minor": { "arousal": -10 },
-        "serious": { "arousal": -20 },
-        "severe": { "arousal": -40 }
+        "trivial": {
+          "arousal": -5
+        },
+        "minor": {
+          "arousal": -10
+        },
+        "serious": {
+          "arousal": -20
+        },
+        "severe": {
+          "arousal": -40
+        }
+      }
+    },
+    "time_skip": {
+      "description": "The story moves on and the moment passes for {{char}}: a time skip, a scene cut, a long stretch of something unrelated, or a night's sleep. (trivial: a few minutes pass; minor: an hour or so; serious: several hours; severe: overnight or longer)",
+      "always": true,
+      "effects": {
+        "trivial": {
+          "arousal": -10
+        },
+        "minor": {
+          "arousal": -25
+        },
+        "serious": {
+          "arousal": -50
+        },
+        "severe": {
+          "arousal": "=0"
+        }
       }
     },
     "boundary_crossed": {
@@ -344,10 +750,28 @@
       "bypassCapFrom": "minor",
       "journalFrom": "minor",
       "effects": {
-        "trivial": { "arousal": -10, "trust": -5, "respect": -3 },
-        "minor": { "arousal": -10, "trust": -5, "respect": -3 },
-        "serious": { "arousal": -30, "trust": -15, "respect": -10, "love": -10 },
-        "severe": { "arousal": "=0", "trust": -40, "respect": -25, "love": -30 }
+        "trivial": {
+          "arousal": -10,
+          "trust": -5,
+          "respect": -3
+        },
+        "minor": {
+          "arousal": -10,
+          "trust": -5,
+          "respect": -3
+        },
+        "serious": {
+          "arousal": -30,
+          "trust": -15,
+          "respect": -10,
+          "love": -10
+        },
+        "severe": {
+          "arousal": "=0",
+          "trust": -40,
+          "respect": -25,
+          "love": -30
+        }
       }
     }
   }
