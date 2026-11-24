@@ -145,3 +145,71 @@ test('old states survive meters being added to the rulebook', () => {
     assert.equal(s.values.trust, 50);
     assert.equal(s.values.lust, 10);
 });
+
+// ---------- per-meter overrides, set effects, fade ----------
+const fast = validateRulebook({
+    name: 'Fast meter test',
+    meters: [
+        { id: 'slow', min: 0, max: 100, start: 50, levels: [{ from: 0, name: 'Low', instruction: 'x' }, { from: 60, name: 'High', instruction: 'y' }] },
+        {
+            id: 'arousal', label: 'Arousal', min: 0, max: 100, start: 0, gainCap: 40, softZone: 0, levelMargin: 3, transient: true,
+            fade: { amount: 10, to: 0 },
+            levels: [{ from: 0, name: 'Calm', instruction: '' }, { from: 35, name: 'Warm', instruction: 'warm' }, { from: 60, name: 'Aroused', instruction: 'aroused' }],
+        },
+    ],
+    events: {
+        kiss: { description: 'kiss', always: true, effects: { serious: { arousal: 20, slow: 20 } } },
+        climax: { description: 'her climax', always: true, effects: { serious: { arousal: '=0' } } },
+        bad: { description: 'bad', effects: { minor: { arousal: '=x' } } },
+    },
+});
+
+test('invalid set values are reported', () => {
+    assert.ok(fast.errors.some(e => e.includes('"=N"')));
+});
+
+const frb = (() => { const r = structuredClone(fast.rulebook); delete r.events.bad; return validateRulebook(r).rulebook; })();
+
+test('a meter can have its own per-turn cap and no slowdown near the end', () => {
+    let s = makeState(frb, { arousal: 0, slow: 50 });
+    const r = applyTurn(frb, s, [{ type: 'kiss', severity: 'serious' }, { type: 'kiss', severity: 'serious' }]);
+    assert.equal(r.state.values.arousal, 40, 'two kisses: +40, within its own cap');
+    assert.equal(r.state.values.slow, 55, 'the other meter keeps the rulebook cap of 5');
+    s = makeState(frb, { arousal: 90 });
+    assert.equal(applyTurn(frb, s, [{ type: 'kiss', severity: 'serious' }]).state.values.arousal, 100, 'softZone 0: no slowdown');
+});
+
+test('"=N" sets a meter, after other changes in the same turn', () => {
+    const s = makeState(frb, { arousal: 80 });
+    const r = applyTurn(frb, s, [{ type: 'kiss', severity: 'serious' }, { type: 'climax', severity: 'serious' }]);
+    assert.equal(r.state.values.arousal, 0);
+    assert.deepEqual(r.applied[1].sets, { arousal: 0 });
+    assert.equal(r.applied[1].deltas.arousal, -80);
+    assert.equal(r.applied[0].deltas.arousal, 0, 'the kiss is overridden by the reset');
+});
+
+test('fade only applies on a turn when nothing touched the meter', () => {
+    const s = makeState(frb, { arousal: 45, slow: 50 });
+    const quiet = applyTurn(frb, s, []);
+    assert.equal(quiet.state.values.arousal, 35);
+    assert.deepEqual(quiet.fades, { arousal: -10 });
+    assert.equal(quiet.state.values.slow, 50, 'meters without fade stay put');
+    const busy = applyTurn(frb, s, [{ type: 'kiss', severity: 'serious' }]);
+    assert.equal(busy.state.values.arousal, 65);
+    assert.deepEqual(busy.fades, {});
+    assert.equal(applyTurn(frb, makeState(frb, { arousal: 4 }), []).state.values.arousal, 0, 'never fades past its target');
+});
+
+test('a meter can have its own level margin', () => {
+    let s = makeState(frb, { arousal: 36 });
+    assert.equal(s.levels.arousal, 'Warm');
+    s = applyTurn(frb, s, []).state; // 26: more than 3 below Warm's edge
+    assert.equal(s.levels.arousal, 'Calm');
+});
+
+test('transient meters leave out "began … now …" and the lowest level sends nothing', () => {
+    const start = makeState(frb, { arousal: 0, slow: 50 });
+    assert.equal(composeNote(frb, start, start, [], 1, {}), '');
+    const now = makeState(frb, { arousal: 62, slow: 50 });
+    assert.match(composeNote(frb, now, start, [], 1, {}), /- Arousal \(Aroused\): aroused/);
+});

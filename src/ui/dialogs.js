@@ -184,8 +184,8 @@ export function renderTrace() {
     const rb = chatRulebook();
     const label = (id) => rb?.meters.find(m => m.id === id)?.label || id;
     const when = new Date(t.at).toLocaleTimeString();
-    const math = t.math ? Object.entries(t.math).filter(([, m]) => m.nominal || m.bypass || m.old !== m.next).map(([id, m]) =>
-        `<tr><td>${esc(label(id))}</td><td>${m.old} → <b>${m.next}</b></td><td>${m.nominal ? `${m.nominal > 0 ? '+' : ''}${m.nominal}` : ''}${m.factor < 1 ? ` ×${m.factor} near the end` : ''}${m.capped ? ' (capped)' : ''}${m.bypass ? ` ${m.bypass > 0 ? '+' : ''}${m.bypass} uncapped` : ''}${m.locked ? ' (locked)' : ''}</td><td>${esc(m.level || '')}</td></tr>`).join('') : '';
+    const math = t.math ? Object.entries(t.math).filter(([, m]) => m.nominal || m.bypass || m.old !== m.next || m.set !== null).map(([id, m]) =>
+        `<tr><td>${esc(label(id))}</td><td>${m.old} → <b>${m.next}</b></td><td>${m.nominal ? `${m.nominal > 0 ? '+' : ''}${m.nominal}` : ''}${m.factor < 1 ? ` ×${m.factor} near the end` : ''}${m.capped ? ' (capped)' : ''}${m.bypass ? ` ${m.bypass > 0 ? '+' : ''}${m.bypass} uncapped` : ''}${m.locked ? ' (locked)' : ''}${m.set !== null && m.set !== undefined ? ` set to ${m.set}` : ''}${m.faded ? ` faded ${m.faded > 0 ? '+' : ''}${m.faded}` : ''}</td><td>${esc(m.level || '')}</td></tr>`).join('') : '';
     traceWin.body.innerHTML = `
         <div class="srb-row srb-between"><div class="srb-hint">${t.kind === 'assessment' ? 'Starting-point assessment' : `Judgement of message #${t.index}`} · ${when}${t.model ? ` · ${esc(t.model)}` : ''}${t.mode ? ` · ${esc(t.mode)}` : ''} ${t.messages ? ` · about ${tokens(t.messages)} tokens in` : ''}</div>
             <div class="srb-row"><button type="button" class="menu_button" data-act="refresh">Refresh</button><button type="button" class="menu_button" data-act="copy">Copy</button></div></div>

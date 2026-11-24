@@ -98,7 +98,20 @@ See `src/defaults.js` for the bundled **Slow burn** rulebook. In short:
 }
 ```
 
-Levels are listed by where they start (`from`); the last one runs to `max`. Instructions use `{{char}}` and `{{user}}`, so one rulebook works for any character.
+Levels are listed by where they start (`from`); the last one runs to `max`. Instructions use `{{char}}` and `{{user}}`, so one rulebook works for any character. A level with an empty instruction sends nothing.
+
+Optional, per meter (for fast-moving meters like arousal):
+
+- `gainCap`, `softZone`, `levelMargin`: override the rulebook's `limits` for this meter (`softZone: 0` turns off the slowdown near the ends).
+- `fade`: `{ "amount": 10, "to": 0 }` moves the meter towards `to` by `amount` on any judged turn when no event touched it.
+- `transient: true`: the note says just the level ("Arousal (Warm)") instead of "began X, now Y".
+
+Optional, per event:
+
+- An effect of `"=N"` sets the meter to N instead of changing it (applied after other changes that turn), e.g. `"arousal": "=0"` for a climax.
+- `always: true`: the judge scores it whenever it happens, whoever starts it, even when it fits the character's current level (the "expected behaviour isn't news" rule doesn't apply).
+
+`rulebooks/` has ready-made rulebooks to import: **Slice of life + arousal** (Trust, Respect, Hate ↔ Love, Sub ↔ Dom, and a fast Arousal meter that fades on quiet turns and resets on the character's climax).
 
 ## Where things are stored
 

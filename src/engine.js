@@ -31,6 +31,14 @@ export function validateRulebook(input) {
         m.min = Number(m.min ?? 0); m.max = Number(m.max ?? 100);
         if (!(m.max > m.min)) errors.push(`${where}: "max" must be above "min".`);
         m.start = clamp(Number(m.start ?? m.min), m.min, m.max);
+        for (const k of ['gainCap', 'softZone', 'levelMargin']) {
+            if (m[k] !== undefined && !(Number.isFinite(Number(m[k])) && Number(m[k]) >= 0)) errors.push(`${where}: "${k}" must be a number of 0 or more.`);
+            else if (m[k] !== undefined) m[k] = Number(m[k]);
+        }
+        if (m.fade !== undefined) {
+            if (!m.fade || !(Number(m.fade.amount) > 0)) errors.push(`${where}: "fade" needs an "amount" above 0.`);
+            else m.fade = { amount: Number(m.fade.amount), to: clamp(Number(m.fade.to ?? m.min), m.min, m.max) };
+        }
         if (!Array.isArray(m.levels) || !m.levels.length) { errors.push(`${where} needs at least one level.`); m.levels = []; }
         m.levels.forEach((l, j) => {
             if (!l.name) errors.push(`${where}, level ${j + 1}: give it a "name".`);
@@ -57,7 +65,7 @@ export function validateRulebook(input) {
             if (!SEVERITIES.includes(sev)) errors.push(`Event "${key}": unknown severity "${sev}" (use ${SEVERITIES.join(', ')}).`);
             for (const [mid, d] of Object.entries(eff || {})) {
                 if (!ids.has(mid)) errors.push(`Event "${key}", ${sev}: unknown meter "${mid}".`);
-                if (!Number.isFinite(Number(d))) errors.push(`Event "${key}", ${sev}: the change for "${mid}" must be a number.`);
+                if (!Number.isFinite(Number(d)) && parseSet(d) === null) errors.push(`Event "${key}", ${sev}: the change for "${mid}" must be a number, or "=N" to set it to N.`);
             }
         }
         if (ev.bypassCapFrom && !SEVERITIES.includes(ev.bypassCapFrom)) errors.push(`Event "${key}": "bypassCapFrom" must be one of ${SEVERITIES.join(', ')}.`);
@@ -66,6 +74,14 @@ export function validateRulebook(input) {
     if (rb.statusMeter && !ids.has(rb.statusMeter)) errors.push(`"statusMeter" points at an unknown meter "${rb.statusMeter}".`);
     return { rulebook: rb, errors };
 }
+
+/** "=N" in an effect sets the meter to N instead of changing it. Returns N, or null. */
+export function parseSet(v) {
+    const m = typeof v === 'string' ? v.trim().match(/^=\s*(-?\d+(?:\.\d+)?)$/) : null;
+    return m ? Number(m[1]) : null;
+}
+
+const marginFor = (rb, m) => m.levelMargin ?? rb.limits.levelMargin;
 
 // ---------- levels ----------
 
@@ -107,7 +123,7 @@ export function makeState(rb, values = {}, prev = null) {
     for (const m of rb.meters) {
         state.unlocked[m.id] = !m.gate || !!prev?.unlocked?.[m.id] || state.values[m.gate.meter] >= m.gate.min;
         const i = prev?.levels?.[m.id] !== undefined
-            ? levelWithMargin(m, state.values[m.id], prev.levels[m.id], rb.limits.levelMargin)
+            ? levelWithMargin(m, state.values[m.id], prev.levels[m.id], marginFor(rb, m))
             : levelIndexFor(m, state.values[m.id]);
         state.levels[m.id] = m.levels[i].name;
     }
@@ -120,7 +136,7 @@ export function normalizeState(rb, state, fallback = null) {
     const s = makeState(rb, values, null);
     for (const m of rb.meters) {
         if (state?.levels?.[m.id] && m.levels.some(l => l.name === state.levels[m.id])) {
-            s.levels[m.id] = m.levels[levelWithMargin(m, s.values[m.id], state.levels[m.id], rb.limits.levelMargin)].name;
+            s.levels[m.id] = m.levels[levelWithMargin(m, s.values[m.id], state.levels[m.id], marginFor(rb, m))].name;
         }
         if (state?.unlocked?.[m.id]) s.unlocked[m.id] = true;
     }
@@ -154,25 +170,31 @@ export function softFactor(meter, value, delta, softZone) {
  * Applies a turn's events to a state.
  * Returns { state, applied, meters } where `applied` lists each event with the change it
  * actually made per meter, and `meters` explains each meter's maths (for the trace).
+ * Per meter: `gainCap`, `softZone` and `levelMargin` override the rulebook's limits; an effect of
+ * "=N" sets the meter to N (the last one wins, after other changes); `fade` moves a meter towards
+ * `fade.to` by `fade.amount` on a turn when no event touched it.
  */
 export function applyTurn(rb, before, events) {
     const lim = rb.limits;
     const applied = [];
     const perMeter = {};
-    for (const m of rb.meters) perMeter[m.id] = { normal: 0, bypass: 0 };
+    for (const m of rb.meters) perMeter[m.id] = { normal: 0, bypass: 0, set: null, touched: false };
 
     for (const ev of events || []) {
-        if (ev.cancelled) { applied.push({ ...ev, deltas: {} }); continue; }
+        if (ev.cancelled) { applied.push({ ...ev, deltas: {}, sets: {} }); continue; }
         const eff = eventEffect(rb, ev);
         if (!eff) continue;
         const by = bypasses(rb, ev);
-        const nominal = {};
+        const nominal = {}, sets = {};
         for (const [mid, d] of Object.entries(eff)) {
             if (!perMeter[mid]) continue;
+            perMeter[mid].touched = true;
+            const setTo = parseSet(d);
+            if (setTo !== null) { sets[mid] = setTo; perMeter[mid].set = setTo; continue; }
             nominal[mid] = Number(d);
             perMeter[mid][by ? 'bypass' : 'normal'] += Number(d);
         }
-        applied.push({ ...ev, bypass: by, nominal, deltas: {} });
+        applied.push({ ...ev, bypass: by, nominal, sets, deltas: {} });
     }
 
     const meters = {};
@@ -181,16 +203,23 @@ export function applyTurn(rb, before, events) {
         const old = before.values[m.id];
         const pm = perMeter[m.id];
         const locked = m.gate && !before.unlocked?.[m.id];
+        const cap = m.gainCap ?? lim.gainCap;
         let normal = pm.normal;
-        const factor = softFactor(m, old, normal, lim.softZone);
+        const factor = softFactor(m, old, normal, m.softZone ?? lim.softZone);
         normal *= factor;
-        const capped = Math.abs(normal) > lim.gainCap && lim.gainCap > 0;
-        if (capped) normal = Math.sign(normal) * lim.gainCap;
-        const total = locked ? 0 : normal + pm.bypass;
-        const next = clamp(round1(old + total), m.min, m.max);
+        const capped = cap > 0 && Math.abs(normal) > cap;
+        if (capped) normal = Math.sign(normal) * cap;
+        let next = locked ? old : clamp(round1(old + normal + pm.bypass), m.min, m.max);
+        if (!locked && pm.set !== null) next = clamp(pm.set, m.min, m.max);
+        let faded = 0;
+        if (!locked && !pm.touched && m.fade && old !== m.fade.to) {
+            const toward = old > m.fade.to ? -1 : 1;
+            next = toward < 0 ? Math.max(m.fade.to, old - m.fade.amount) : Math.min(m.fade.to, old + m.fade.amount);
+            faded = round1(next - old);
+        }
         values[m.id] = next;
         meters[m.id] = {
-            old, next, nominal: pm.normal, bypass: pm.bypass, factor: round1(factor), capped, locked: !!locked,
+            old, next, nominal: pm.normal, bypass: pm.bypass, set: pm.set, faded, factor: round1(factor), capped, locked: !!locked,
             scale: pm.normal ? normal / pm.normal : 1,
         };
     }
@@ -200,15 +229,20 @@ export function applyTurn(rb, before, events) {
         if (!a.nominal) continue;
         for (const [mid, d] of Object.entries(a.nominal)) {
             const mm = meters[mid];
-            if (mm.locked) { a.deltas[mid] = 0; continue; }
+            if (mm.locked || mm.set !== null) { a.deltas[mid] = 0; continue; }
             a.deltas[mid] = round1(a.bypass ? d : d * mm.scale);
             if (mm.capped && !a.bypass) a.capped = true;
+        }
+        for (const mid of Object.keys(a.sets || {})) {
+            const mm = meters[mid];
+            if (!mm.locked) a.deltas[mid] = round1(mm.next - mm.old);
         }
     }
 
     const state = makeState(rb, values, before);
     for (const m of rb.meters) meters[m.id].level = state.levels[m.id];
-    return { state, applied, meters };
+    const fades = Object.fromEntries(Object.entries(meters).filter(([, x]) => x.faded).map(([id, x]) => [id, x.faded]));
+    return { state, applied, meters, fades };
 }
 
 /**
@@ -269,7 +303,7 @@ export function composeNote(rb, state, start, journal, turn, opts = {}) {
         const lv = m.levels.find(l => l.name === level);
         if (!lv?.instruction) continue;
         const num = opts.includeNumbers ? ` ${fmtValue(m, state.values[m.id])}` : '';
-        const from = startLevel && startLevel !== level ? `began ${startLevel}, now ${level}${num}` : `${level}${num}`;
+        const from = !m.transient && startLevel && startLevel !== level ? `began ${startLevel}, now ${level}${num}` : `${level}${num}`;
         lines.push(`- ${m.label} (${from}): ${lv.instruction}`);
     }
     const recent = (journal || []).filter(j => turn - j.turn < rb.limits.recentTurns);

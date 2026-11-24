@@ -89,13 +89,13 @@ function stateText(rb, state, journal, turn) {
 
 function systemPrompt(rb) {
     const n = names();
-    const events = Object.entries(rb.events).map(([k, e]) => `- ${k}: ${sub(e.description)}`).join('\n');
+    const events = Object.entries(rb.events).map(([k, e]) => `- ${k}${e.always ? ' (always counts, even when expected)' : ''}: ${sub(e.description)}`).join('\n');
     return `You are the referee for an ongoing roleplay between ${n.char} (the character) and ${n.user} (the user). You never write story text. You read the latest exchange and report which of the listed events happened in it, from ${n.char}'s point of view.
 
 Rules:
 - Score only the LATEST EXCHANGE. Everything before it is background: never score it again, even when it is mentioned or remembered.
 - Only count what ${n.char} sees, hears or finds out. ${n.user}'s private thoughts and inner narration are never evidence. A lie ${n.char} hasn't discovered doesn't count until ${n.char} discovers it.
-- Behaviour that fits ${n.char}'s current levels is expected, not an event. Score what ${n.user} chooses to do, and ${n.char} acting against or beyond ${n.char}'s current levels.
+- Behaviour that fits ${n.char}'s current levels is expected, not an event. Score what ${n.user} chooses to do, and ${n.char} acting against or beyond ${n.char}'s current levels. Exception: events marked "always counts" are scored whenever they happen, whoever starts them.
 - Judge severity by how much it matters in this relationship, using the current state and recent events.
 - Several events can happen in one exchange. If nothing on the list happened, return an empty list.
 - Keep each reason under 8 words: a plain description of what happened.

@@ -6,12 +6,14 @@ import { esc } from './window.js';
 
 const mesEl = (index) => document.querySelector(`#chat .mes[mesid="${index}"]`);
 
-function deltaText(rb, deltas) {
-    const parts = Object.entries(deltas || {}).filter(([, d]) => d).map(([id, d]) => {
-        const label = rb.meters.find(m => m.id === id)?.label || id;
+const labelOf = (rb, id) => rb.meters.find(m => m.id === id)?.label || id;
+
+function deltaText(rb, deltas, sets = {}) {
+    const parts = Object.entries(deltas || {}).filter(([id, d]) => d && !(id in sets)).map(([id, d]) => {
         const r = Math.round(Math.abs(d));
-        return `${label} ${d > 0 ? '+' : '−'}${r || '<1'}`;
+        return `${labelOf(rb, id)} ${d > 0 ? '+' : '−'}${r || '<1'}`;
     });
+    for (const [id, v] of Object.entries(sets || {})) parts.push(`${labelOf(rb, id)} → ${Math.round(v)}`);
     return parts.join(', ') || 'no change';
 }
 
@@ -22,7 +24,7 @@ function eventChip(rb, ev, i, { editable, revised }) {
     const sev = r && !r.cancelled ? r.severity : ev.severity;
     const title = r?.revisedReason ? `Revised next turn: ${r.revisedReason}` : (ev.userEdited ? 'Changed by you' : '');
     const cls = ['srb-chip', cancelled ? 'srb-cancelled' : '', editable ? 'srb-editable' : '', (ev.deltas && Object.values(ev.deltas).some(d => d < 0)) ? 'srb-neg' : 'srb-pos'].join(' ');
-    const inner = `${esc(deltaText(rb, ev.deltas))} · ${esc(ev.reason || ev.type)} <span class="srb-sev">(${esc(sev)}${reratedFrom ? `, was ${esc(reratedFrom)}` : ''}${ev.capped ? ', capped' : ''})</span>${r ? ' <span class="srb-sev">revised</span>' : ''}`;
+    const inner = `${esc(deltaText(rb, ev.deltas, ev.sets))} · ${esc(ev.reason || ev.type)} <span class="srb-sev">(${esc(sev)}${reratedFrom ? `, was ${esc(reratedFrom)}` : ''}${ev.capped ? ', capped' : ''})</span>${r ? ' <span class="srb-sev">revised</span>' : ''}`;
     return editable
         ? `<button type="button" class="${cls}" data-ev="${i}" title="${esc(title || 'Tap to change')}">${inner}</button>`
         : `<span class="${cls}" title="${esc(title)}">${inner}</span>`;
@@ -45,6 +47,9 @@ export function renderChips(index) {
     else {
         const { snap, revised, editable } = model;
         const chips = snap.events.map((ev, i) => eventChip(rb, ev, i, { editable, revised }));
+        for (const [id, d] of Object.entries(snap.fades || {})) {
+            chips.push(`<span class="srb-chip srb-muted">${esc(labelOf(rb, id))} ${d > 0 ? '+' : '−'}${Math.round(Math.abs(d))} · fading</span>`);
+        }
         if (!chips.length) chips.push('<span class="srb-chip srb-muted">Nothing scored this turn</span>');
         if (snap.revise?.events?.length) chips.push('<span class="srb-chip srb-muted" title="See the previous reply">Revised the previous turn</span>');
         if (snap.manual) chips.push('<span class="srb-chip srb-muted">Adjusted by hand</span>');
