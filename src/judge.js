@@ -33,8 +33,10 @@ function sheet({ withGreeting = false } = {}) {
     if (f.personality) parts.push(`Personality:\n${f.personality}`);
     if (f.scenario) parts.push(`Scenario:\n${f.scenario}`);
     if (withGreeting) {
-        const first = ctx().chat.find(m => !m.is_user && !m.is_system);
-        if (first) parts.push(`Opening message:\n${cleanText(first.mes)}`);
+        // The card's own greeting, not the chat's first message: an imported or continued chat
+        // can start in the middle of the story.
+        const greeting = sub(currentCharacter()?.first_mes || currentCharacter()?.data?.first_mes || '');
+        if (greeting.trim()) parts.push(`Opening message:\n${cleanText(greeting)}`);
     }
     const persona = f.persona ? `${n.user}'s persona:\n${f.persona}` : '';
     return { sheet: parts.join('\n\n'), persona };
