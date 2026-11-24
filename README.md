@@ -96,7 +96,7 @@ See `src/defaults.js` for the bundled **Slow burn** rulebook. In short:
     "dishonesty": {
       "description": "{{user}} lies to {{char}} … and {{char}} knows or finds out.",
       "bypassCapFrom": "serious",            // from this severity up, the per-turn cap doesn't apply
-      "journalFrom": "serious",              // from this severity up, it's listed as a recent major event
+      "journalFrom": "serious",              // from this severity up, it's listed as a recent major event (once while it's recent; again only if it escalates)
       "effects": { "trivial": { "trust": -3 }, "severe": { "trust": -100, "affection": -40, "love": -30, "kindness": -25 } }
     }
   }

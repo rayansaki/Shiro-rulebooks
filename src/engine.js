@@ -275,13 +275,26 @@ export function isMajor(rb, ev) {
     return !!from && !ev.cancelled && sevRank(ev.severity) >= sevRank(from);
 }
 
-/** Journal after a turn: earlier entries plus this turn's major events, newest last, at most 20. */
+/**
+ * Journal after a turn: earlier entries plus this turn's major events, newest last, at most 20.
+ * An event that is still in the note's recent window isn't logged again (so a scene that carries on
+ * over several turns is one entry, from when it started), unless it comes back at a higher severity,
+ * which replaces the earlier entry.
+ */
 export function nextJournal(rb, journal, turn, applied) {
-    const add = applied
-        .map((a, i) => ({ a, i }))
-        .filter(({ a }) => isMajor(rb, a))
-        .map(({ a, i }) => ({ turn, key: `${turn}:${i}`, type: a.type, severity: a.severity, reason: a.reason || '' }));
-    return [...(journal || []), ...add].slice(-20);
+    const window = rb.limits?.recentTurns ?? 8;
+    let out = [...(journal || [])];
+    applied.forEach((a, i) => {
+        if (!isMajor(rb, a)) return;
+        const entry = { turn, key: `${turn}:${i}`, type: a.type, severity: a.severity, reason: a.reason || '' };
+        const same = out.findIndex(j => j.type === a.type && turn - j.turn < window);
+        if (same >= 0) {
+            if (sevRank(a.severity) <= sevRank(out[same].severity)) return;
+            out.splice(same, 1);
+        }
+        out.push(entry);
+    });
+    return out.slice(-20);
 }
 
 /** Journal with one turn's entries rebuilt after a revision. */

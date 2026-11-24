@@ -236,3 +236,22 @@ test('transient meters are described even at their starting level', () => {
     assert.match(composeNote(frb, start, start, [], 1, {}), /- Arousal \(Warm\): warm/);
     assert.doesNotMatch(composeNote(frb, start, start, [], 1, {}), /Low|High/, 'slow meters at their start stay silent');
 });
+
+test('an ongoing event is journalled once while it is recent, and again if it escalates', () => {
+    const rb = validateRulebook({
+        name: 'j', limits: { recentTurns: 4 },
+        meters: [{ id: 'a', min: 0, max: 100, levels: [{ from: 0, name: 'Low' }] }],
+        events: { scene: { description: 'scene', journalFrom: 'serious', effects: { serious: { a: 1 }, severe: { a: 2 } } } },
+    }).rulebook;
+    const ev = (severity, reason) => [{ type: 'scene', severity, reason }];
+    let j = nextJournal(rb, [], 1, ev('serious', 'starts'));
+    j = nextJournal(rb, j, 2, ev('serious', 'carries on'));
+    j = nextJournal(rb, j, 3, ev('serious', 'carries on'));
+    assert.deepEqual(j.map(e => e.reason), ['starts'], 'one entry for the ongoing scene');
+    j = nextJournal(rb, j, 4, ev('severe', 'escalates'));
+    assert.deepEqual(j.map(e => [e.turn, e.reason]), [[4, 'escalates']], 'a higher severity replaces it');
+    j = nextJournal(rb, j, 8, ev('severe', 'a new scene'));
+    assert.deepEqual(j.map(e => e.reason), ['escalates', 'a new scene'], 'logged again once the old one has left the note');
+    const two = nextJournal(rb, [], 1, [{ type: 'scene', severity: 'serious', reason: 'x' }, { type: 'scene', severity: 'serious', reason: 'y' }]);
+    assert.equal(two.length, 1, 'twice in one turn is one entry');
+});
