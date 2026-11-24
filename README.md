@@ -104,7 +104,7 @@ Optional, per meter (for fast-moving meters like arousal):
 
 - `gainCap`, `softZone`, `levelMargin`: override the rulebook's `limits` for this meter (`softZone: 0` turns off the slowdown near the ends).
 - `fade`: `{ "amount": 10, "to": 0 }` moves the meter towards `to` by `amount` on any judged turn when no event touched it.
-- `transient: true`: the note says just the level ("Arousal (Warm)") instead of "began X, now Y".
+- `transient: true`: a state of the moment rather than a trait. The note always describes its current level (even its starting level, since the card's opening scene doesn't cover it later on) and says just the level ("Arousal (Warm)") instead of "began X, now Y".
 
 Optional, per event:
 

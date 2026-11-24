@@ -290,7 +290,9 @@ export function reviseJournal(rb, journal, turn, revisedEvents) {
 
 /**
  * Builds the note sent to the main model. Levels that match the starting point send nothing,
- * because the character card already describes them. Returns '' when there is nothing to say.
+ * because the character card already describes them (except transient meters, which always
+ * describe their current level). Levels with an empty instruction send nothing. Returns '' when
+ * there is nothing to say.
  * Keeps {{char}} and {{user}} as macros; SillyTavern substitutes them.
  */
 export function composeNote(rb, state, start, journal, turn, opts = {}) {
@@ -299,7 +301,9 @@ export function composeNote(rb, state, start, journal, turn, opts = {}) {
         if (m.gate && !state.unlocked[m.id]) continue;
         const level = state.levels[m.id];
         const startLevel = start?.levels?.[m.id];
-        if (startLevel && level === startLevel) continue;
+        // A fast (transient) meter is a state of the moment: the card's opening scene doesn't cover
+        // it later on, so it's always described. Slow meters only when they've moved from the start.
+        if (!m.transient && startLevel && level === startLevel) continue;
         const lv = m.levels.find(l => l.name === level);
         if (!lv?.instruction) continue;
         const num = opts.includeNumbers ? ` ${fmtValue(m, state.values[m.id])}` : '';

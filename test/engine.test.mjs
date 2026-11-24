@@ -213,3 +213,9 @@ test('transient meters leave out "began … now …" and the lowest level sends 
     const now = makeState(frb, { arousal: 62, slow: 50 });
     assert.match(composeNote(frb, now, start, [], 1, {}), /- Arousal \(Aroused\): aroused/);
 });
+
+test('transient meters are described even at their starting level', () => {
+    const start = makeState(frb, { arousal: 40, slow: 50 });
+    assert.match(composeNote(frb, start, start, [], 1, {}), /- Arousal \(Warm\): warm/);
+    assert.doesNotMatch(composeNote(frb, start, start, [], 1, {}), /Low|High/, 'slow meters at their start stay silent');
+});
