@@ -1,4 +1,4 @@
-# Shuri Rulebooks
+# Shiro Rulebooks
 
 Slow-burn relationship meters for SillyTavern. A character stuck in "mean mode" because their card says so can actually warm up, earn trust, fall in love, or turn on you, one turn at a time.
 
@@ -47,7 +47,7 @@ The switch in the window turns the rulebook off for that chat: no judge calls, n
 
 ## Install
 
-Extensions → Install extension → `https://github.com/rayansaki/Shuri-rulebooks`
+Extensions → Install extension → `https://github.com/rayansaki/Shiro-rulebooks`
 
 Needs SillyTavern 1.19 or later, with the built-in **Connection Manager** extension enabled (the judge borrows a connection profile's API, model and key).
 
@@ -125,6 +125,8 @@ Optional, per event:
 - **Rulebooks, assignments and settings:** extension settings (nothing is written to character cards).
 - **The chat's rulebook, its on/off state and its starting point:** chat metadata.
 - **Snapshots:** on each reply, in `extra.shuri_rulebook` (and that swipe's copy).
+
+The storage keys keep the extension's earlier name (`shuri_…`) so saved rulebooks, chats and snapshots carry over.
 
 ## Known limits of this prototype
 

@@ -1,4 +1,4 @@
-// Shuri Rulebooks: slow-burn relationship meters for SillyTavern, scored by a separate judge model.
+// Shiro Rulebooks: slow-burn relationship meters for SillyTavern, scored by a separate judge model.
 import { ctx, settings, chatMeta, isSoloChat, getRulebook } from './src/state.js';
 import {
     bus, status, onGenerationStarted, onGenerationEnded, onMessageReceived, updateInjection, attach,

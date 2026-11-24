@@ -1,5 +1,5 @@
 {
-  "name": "shuri-rulebooks",
+  "name": "shiro-rulebooks",
   "private": true,
   "type": "module",
   "description": "Slow-burn relationship meters for SillyTavern, scored by a separate judge model.",
