@@ -203,6 +203,10 @@
 .srb-start-row { display: flex; flex-direction: column; gap: 4px; padding-bottom: 8px; border-bottom: 1px solid color-mix(in srgb, var(--srb-border) 40%, transparent); }
 .srb-start-row input[type="range"] { width: 100%; accent-color: var(--srb-accent); }
 .srb-num { width: 72px !important; margin: 0 !important; text-align: right; }
+.srb-start-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.srb-start-cell { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.srb-start-cell input[type="range"] { width: 100%; accent-color: var(--srb-accent); }
+.srb-window .srb-wide { width: 100% !important; justify-content: center; }
 .srb-editor .srb-json { flex: 1; min-height: 200px; resize: none; margin: 0; font-family: var(--monoFontFamily, ui-monospace, monospace); font-size: 0.85em; white-space: pre; }
 .srb-editor ul { margin: 4px 0 0; padding-left: 18px; }
 

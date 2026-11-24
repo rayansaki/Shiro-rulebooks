@@ -2,7 +2,7 @@
 import { ctx, settings, chatMeta, isSoloChat, getRulebook } from './src/state.js';
 import {
     bus, status, onGenerationStarted, onGenerationEnded, onMessageReceived, updateInjection, attach,
-    setEnabled, rejudgeLatest,
+    setEnabled, rejudgeLatest, runAssessment,
 } from './src/controller.js';
 import { createPanel, renderPanel, panel } from './src/ui/panel.js';
 import { createStartDialog, openStartDialog, createEditor, openEditor, createTrace, openTrace, renderTrace, startDialog } from './src/ui/dialogs.js';
@@ -69,12 +69,12 @@ function registerCommand() {
     if (!SlashCommandParser?.addCommandObject) return;
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'rulebook',
-        helpString: 'Rulebook: <code>/rulebook</code> or <code>/rulebook open</code> opens the window; also <code>close</code>, <code>on</code>, <code>off</code> (for this chat) and <code>rejudge</code> (the last reply).',
+        helpString: 'Rulebook: <code>/rulebook</code> or <code>/rulebook open</code> opens the window; also <code>close</code>, <code>on</code>, <code>off</code> (for this chat), <code>rejudge</code> (the last reply) and <code>reassess</code> (the starting point).',
         unnamedArgumentList: [SlashCommandArgument.fromProps({
-            description: 'open, close, on, off or rejudge',
+            description: 'open, close, on, off, rejudge or reassess',
             typeList: [ARGUMENT_TYPE.STRING],
             isRequired: false,
-            enumList: ['open', 'close', 'on', 'off', 'rejudge'],
+            enumList: ['open', 'close', 'on', 'off', 'rejudge', 'reassess'],
         })],
         callback: async (_args, value) => {
             const v = String(value || 'open').trim().toLowerCase();
@@ -82,6 +82,7 @@ function registerCommand() {
             else if (v === 'close') panel().close();
             else if (v === 'on' || v === 'off') { if (chatMeta()) await setEnabled(v === 'on'); }
             else if (v === 'rejudge') await rejudgeLatest();
+            else if (v === 'reassess') { if (chatMeta()) await runAssessment(); }
             return '';
         },
     }));
@@ -117,7 +118,7 @@ jQuery(async () => {
                 for (let i = e.detail.index - 1; i >= 0; i--) { if (!ctx().chat[i]?.is_user) { renderChips(i); break; } }
             }
         });
-        bus.addEventListener('assessed', (e) => openStartDialog({ values: e.detail.values }));
+        bus.addEventListener('assessed', (e) => openStartDialog({ baseline: e.detail.baseline, current: e.detail.current }));
 
         const { eventSource, eventTypes: et } = ctx();
         eventSource.on(et.CHAT_CHANGED, onChatChanged);

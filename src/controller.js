@@ -109,7 +109,7 @@ async function judgeMessage(index, signal) {
     const start = startState(rb);
     const prev = findSnapBefore(index);
     const prevEligible = !!prev && prev.index === lastReplyBefore(index);
-    const base = prev ? normalizeState(rb, prev.snap.after, start) : start;
+    const base = prev ? normalizeState(rb, prev.snap.after, start) : stateAt(rb, index).state;
     const trace = { kind: 'judge', at: Date.now(), index, mode, model: profileLabel(settings().judge.profileId), attempts: [] };
 
     try {
@@ -217,7 +217,10 @@ export async function setContextMode(mode) {
     emit('change');
 }
 
-/** Asks the assessor for starting values. Emits 'assessed' for confirmation, or applies them. */
+/**
+ * Runs the starting-point assessment (card only, plus the story so far for a chat that has one).
+ * Emits 'assessed' for confirmation, or applies the result straight away.
+ */
 export async function runAssessment() {
     const rb = chatRulebook();
     if (!rb) return;
@@ -228,17 +231,59 @@ export async function runAssessment() {
     const model = profileLabel(settings().assess.profileId || settings().judge.profileId);
     try {
         const r = await assess(rb, attempts);
-        status.lastTrace = { kind: 'assessment', at: Date.now(), messages: r.messages, raw: r.raw, values: r.values, model, attempts };
-        if (settings().assess.confirm) emit('assessed', { values: r.values });
-        else await applyValues(r.values);
+        status.lastTrace = { kind: 'assessment', at: Date.now(), runs: r.runs, baseline: r.baseline, current: r.current, model, attempts };
+        if (settings().assess.confirm) emit('assessed', { baseline: r.baseline, current: r.current });
+        else await applyAssessment(r);
     } catch (err) {
         console.error('[Rulebook] Assessment failed', err);
         status.assessError = err.message;
-        status.lastTrace = { kind: 'assessment', at: Date.now(), messages: err.messages, raw: err.raw, error: err.message, model, attempts };
+        status.lastTrace = { kind: 'assessment', at: Date.now(), runs: err.runs, error: err.message, model, attempts };
     } finally {
         status.assessing = false;
         emit('change');
     }
+}
+
+const splitValues = (rb, values) => {
+    const vals = {}, reasons = {};
+    for (const m of rb.meters) {
+        const v = values?.[m.id];
+        vals[m.id] = Number(typeof v === 'object' ? v?.value : v);
+        if (!Number.isFinite(vals[m.id])) vals[m.id] = m.start;
+        if (typeof v === 'object' && v?.reason) reasons[m.id] = v.reason;
+    }
+    return { vals, reasons };
+};
+
+/**
+ * Applies an assessment: `baseline` (where the card puts the character) becomes the starting point
+ * the note compares against; `current` (where the story has taken them, or null for a new chat)
+ * becomes the current values — on the newest snapshot if there are judged turns, otherwise as the
+ * chat's state at attach time.
+ */
+export async function applyAssessment({ baseline, current = null }) {
+    const rb = chatRulebook();
+    if (!rb) return;
+    const b = splitValues(rb, baseline);
+    const patch = { start: { values: b.vals, reasons: b.reasons, at: Date.now() } };
+    const latest = findSnapBefore(ctx().chat.length);
+    if (current) {
+        const cur = splitValues(rb, current);
+        if (latest) {
+            const snap = structuredClone(latest.snap);
+            snap.after = makeState(rb, cur.vals, normalizeState(rb, snap.after, makeState(rb, b.vals)));
+            snap.manual = { at: Date.now(), reassessed: true };
+            writeSnap(latest.index, snap);
+            await ctx().saveChat();
+        } else {
+            patch.anchor = { values: cur.vals, reasons: cur.reasons, at: Date.now() };
+        }
+    } else if (!latest) {
+        patch.anchor = null;
+    }
+    await setChatMeta(patch, { now: true });
+    updateInjection();
+    emit('change');
 }
 
 /**
@@ -256,8 +301,10 @@ export async function applyValues(values) {
         if (typeof v === 'object' && v?.reason) reasons[m.id] = v.reason;
     }
     const latest = findSnapBefore(ctx().chat.length);
-    if (!latest || !chatMeta()?.start) {
+    if (!chatMeta()?.start) {
         await setChatMeta({ start: { values: vals, reasons, at: Date.now() } }, { now: true });
+    } else if (!latest) {
+        await setChatMeta({ anchor: { values: vals, reasons, at: Date.now() } }, { now: true });
     } else {
         const snap = structuredClone(latest.snap);
         snap.after = makeState(rb, vals, normalizeState(rb, snap.after, startState(rb)));
@@ -277,9 +324,10 @@ export function dialogValues() {
     const at = stateAt(rb);
     const out = {};
     for (const m of rb.meters) {
-        out[m.id] = { value: at ? at.state.values[m.id] : m.start, reason: at?.snap ? '' : (meta?.start?.reasons?.[m.id] || '') };
+        const reason = at?.snap ? '' : (meta?.anchor?.reasons?.[m.id] || meta?.start?.reasons?.[m.id] || '');
+        out[m.id] = { value: at ? at.state.values[m.id] : m.start, reason };
     }
-    return { values: out, adjusting: !!at?.snap };
+    return { values: out, adjusting: !!at?.snap || !!meta?.anchor };
 }
 
 // ---------- read helpers for the UI ----------

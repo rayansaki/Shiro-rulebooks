@@ -57,18 +57,21 @@ Needs SillyTavern 1.19 or later, with the built-in **Connection Manager** extens
 2. **Pick it** in Extensions → Rulebook → Judge → Model.
 3. **Assign a rulebook to a character** under "Which rulebook each character uses", or attach one to any chat from the Rulebook window (wand menu → Rulebook, or `/rulebook`).
 4. **Starting a new chat** with an assigned character attaches the rulebook and asks the assessor where the character starts. You can adjust each value before the chat starts.
-5. **Keep your Post History last:** the note goes in at depth 0 with role user, where it joins in-chat prompts with order 100. If your Post History is an in-chat prompt with order 100, the note lands after it. Give Post History (and anything else that must come last, like a tracker prompt) an injection order below 100 in the prompt manager.
+5. **Attaching to a chat that's already under way** runs the assessment twice. The first run reads only the card and persona: where the card puts the character, which becomes the starting point the note compares against. The second run also reads the lorebook entries and the story so far, and is told the first run's values: where the story has taken the character, which becomes the current values. The dialog shows both (**Card** and **Now**) for you to adjust, and the note speaks from the very first turn.
+6. **Reassess the starting point** (a button in the Rulebook window, or `/rulebook reassess`) runs the assessment again at any time. In a chat with judged turns, it resets the starting point and adjusts the current values.
+7. **Keep your Post History last:** the note goes in at depth 0 with role user, where it joins in-chat prompts with order 100. If your Post History is an in-chat prompt with order 100, the note lands after it. Give Post History (and anything else that must come last, like a tracker prompt) an injection order below 100 in the prompt manager.
 
 ## The windows
 
 All windows can be dragged by their header and resized from any edge or corner. Position and size are remembered per browser.
 
 - **Rulebook:** an on/off switch for the chat, Lean or Full judge context, the meters with this turn's changes, the status, a preview of the note, and buttons to re-judge the last turn, show the trace, adjust values, edit the rulebook or detach it.
-- **Starting point / Adjust values:** a slider and the assessor's reason for each meter. Before the first judged turn this sets the starting point; afterwards it adjusts the current values.
+- **Starting point:** the assessment to confirm, with a slider and the assessor's reason for each meter (Card and Now side by side for a chat already under way).
+- **Adjust values:** change the current values by hand. The starting point stays as it was.
 - **Edit rulebook:** the rulebook as JSON, with a Check that lists any problems in plain words.
 - **Trace:** the last judgement or assessment: the prompt sent, the raw answer, the events, any revision, and the maths for each meter.
 
-**Chips** under each judged reply show what changed and why (`Trust −3 · lied about the milk (trivial)`). On the newest judged turn you can tap a chip to change its severity or remove it.
+**Chips** under each judged reply show what changed and why (`Trust −3 · lied about the milk (trivial)`), in whole numbers (the maths keeps the exact values). On the newest judged turn you can tap a chip to change its severity or remove it.
 
 ## Rulebook format
 

@@ -9,7 +9,8 @@ const mesEl = (index) => document.querySelector(`#chat .mes[mesid="${index}"]`);
 function deltaText(rb, deltas) {
     const parts = Object.entries(deltas || {}).filter(([, d]) => d).map(([id, d]) => {
         const label = rb.meters.find(m => m.id === id)?.label || id;
-        return `${label} ${d > 0 ? '+' : '−'}${Math.abs(Math.round(d * 10) / 10)}`;
+        const r = Math.round(Math.abs(d));
+        return `${label} ${d > 0 ? '+' : '−'}${r || '<1'}`;
     });
     return parts.join(', ') || 'no change';
 }

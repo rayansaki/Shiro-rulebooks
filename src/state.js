@@ -176,7 +176,11 @@ export function stateAt(rb, upto = ctx().chat.length) {
     const start = startState(rb);
     if (!start) return null;
     const found = findSnapBefore(upto);
-    if (!found) return { state: start, snap: null, index: -1 };
+    if (!found) {
+        // Attached mid-chat: the assessment's "now" values, until the first judged turn.
+        const anchor = chatMeta()?.anchor?.values;
+        return { state: anchor ? makeState(rb, anchor) : start, snap: null, index: -1 };
+    }
     return { state: normalizeState(rb, found.snap.after, start), snap: found.snap, index: found.index };
 }
 

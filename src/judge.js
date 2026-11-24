@@ -159,30 +159,56 @@ export async function buildJudgeMessages({ rb, index, mode, prev, base, prevElig
 
 // ---------- the assessor ----------
 
-export async function buildAssessMessages(rb) {
-    const c = ctx();
-    const n = names();
-    const meters = rb.meters.map(m => {
+/** True when the chat has more than the greeting: then the assessment also reads the story. */
+export function hasStory() {
+    return ctx().chat.some(m => m.is_user && !m.is_system);
+}
+
+function meterList(rb) {
+    return rb.meters.map(m => {
         const lv = m.levels.map(l => `${l.name} from ${fmtValue(m, l.from)}`).join(', ');
         return `- ${m.id} (${m.label}, ${m.min} to ${m.max}). Levels: ${lv}.`;
     }).join('\n');
-    const system = `You set the starting point for a roleplay rulebook. Read the character sheet and work out where ${n.char} stands toward ${n.user} at the start of this story, on each meter below. Rate ${n.char}'s attitude toward ${n.user} specifically, not ${n.char}'s personality in general: someone vicious to everyone else can still start kind toward ${n.user}. If the sheet says nothing about a meter, use a sensible value for two people with the relationship the sheet describes.
+}
+
+const jsonShape = (rb) => `{"meters": {${rb.meters.map(m => `"${m.id}": {"value": <number>, "reason": "<15 words>"}`).join(', ')}}}`;
+
+/**
+ * Messages for one assessment run.
+ * Without `baseline`: the card-only run (sheet, greeting and persona) — where the card puts the character.
+ * With `baseline`: the story run (also lorebook entries and visible messages) — where things stand now,
+ * compared with the baseline, so only real changes in the story move a value.
+ */
+export async function buildAssessMessages(rb, baseline = null) {
+    const n = names();
+    const s = settings();
+    const intro = `Rate ${n.char}'s attitude toward ${n.user} specifically, not ${n.char}'s personality in general: someone vicious to everyone else can still be kind toward ${n.user}.`;
+    const system = baseline
+        ? `You update a roleplay rulebook's meters. You get ${n.char}'s character sheet, where the meters stood at the start (as the sheet describes ${n.char}), and the story so far. Work out where ${n.char} stands toward ${n.user} now, at the end of the story so far. ${intro} Keep a meter at its starting value unless the story clearly moved it; when it did, move it as far as the story justifies.
 
 Meters:
-${meters}
+${meterList(rb)}
+
+For each meter give a whole number within its range and a reason of at most 15 words, based on what happened in the story.
+Reply with JSON only, in this shape:
+${jsonShape(rb)}`
+        : `You set the starting point for a roleplay rulebook. Read the character sheet and work out where ${n.char} stands toward ${n.user} at the start of the story, as the sheet describes it, on each meter below. ${intro} If the sheet says nothing about a meter, use a sensible value for two people with the relationship the sheet describes.
+
+Meters:
+${meterList(rb)}
 
 For each meter give a whole number within its range and a reason of at most 15 words, based on the sheet.
 Reply with JSON only, in this shape:
-{"meters": {${rb.meters.map(m => `"${m.id}": {"value": <number>, "reason": "<15 words>"}`).join(', ')}}}`;
+${jsonShape(rb)}`;
 
     const { sheet: sh, persona } = sheet({ withGreeting: true });
     const parts = [`${n.char}'s character sheet:\n${sh || '(empty)'}`];
     if (persona) parts.push(persona);
-    const lore = await lorebookText('constant');
-    if (lore) parts.push(`Lorebook entries:\n${lore}`);
-    const visible = c.chat.filter(m => !m.is_system);
-    if (settings().assess.readHistory && visible.length > 1) {
-        parts.push(`The story so far (rate where things stand now, at the end of it):\n${history(c.chat.length, 40)}`);
+    if (baseline) {
+        const lore = await lorebookText(s.judge.lorebook);
+        if (lore) parts.push(`Lorebook entries:\n${lore}`);
+        parts.push(`Where the meters stood at the start, as the sheet describes ${n.char}:\n${rb.meters.map(m => `- ${m.id}: ${baseline[m.id]?.value ?? m.start}${baseline[m.id]?.reason ? ` (${baseline[m.id].reason})` : ''}`).join('\n')}`);
+        parts.push(`The story so far:\n${history(ctx().chat.length, Number(s.judge.historyLimit) || 60)}`);
     }
     return [
         { role: 'system', content: system },
@@ -297,16 +323,31 @@ export async function judge({ rb, messages, prevEventCount, signal, log = [] }) 
     }
 }
 
+/**
+ * The starting-point assessment. Returns { baseline, current, runs }: `current` is null for a new chat
+ * (or when reading the story is switched off); then the baseline is also where the chat starts.
+ */
 export async function assess(rb, log = []) {
     const s = settings();
     const profileId = s.assess.profileId || s.judge.profileId;
-    const messages = await buildAssessMessages(rb);
-    try {
-        const { raw, json } = await callForJson(profileId, messages, { maxTokens: s.judge.maxTokens, temperature: 0.3, reasoning: s.judge.reasoning, log }, s.judge.retry);
-        return { raw, messages, values: cleanAssessment(rb, json) };
-    } catch (err) {
-        throw Object.assign(new Error(errText(err)), { raw: err.raw, messages });
-    }
+    const opts = { maxTokens: s.judge.maxTokens, temperature: 0.3, reasoning: s.judge.reasoning, log };
+    const runs = [];
+    const run = async (label, messages) => {
+        const entry = { label, messages };
+        runs.push(entry);
+        try {
+            const { raw, json } = await callForJson(profileId, messages, opts, s.judge.retry);
+            entry.raw = raw;
+            return cleanAssessment(rb, json);
+        } catch (err) {
+            entry.raw = err.raw;
+            throw Object.assign(new Error(`${label}: ${errText(err)}`), { runs });
+        }
+    };
+    const baseline = await run('Card only', await buildAssessMessages(rb));
+    let current = null;
+    if (s.assess.readHistory && hasStory()) current = await run('Story so far', await buildAssessMessages(rb, baseline));
+    return { baseline, current, runs };
 }
 
 export const characterName = () => currentCharacter()?.name || names().char;

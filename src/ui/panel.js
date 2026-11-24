@@ -38,7 +38,7 @@ async function onClick(e) {
     if (act === 'start') return actions.openStart();
     if (act === 'edit') return actions.openEditor(chatMeta()?.rulebookId);
     if (act === 'settings') return actions.openSettings();
-    if (act === 'retry-assess') return runAssessment();
+    if (act === 'retry-assess' || act === 'reassess') return runAssessment();
     if (act === 'manual-start') return actions.openStart({ fresh: true });
     if (act === 'attach') {
         const id = win.body.querySelector('[data-role="attach-select"]')?.value;
@@ -144,9 +144,10 @@ export function renderPanel() {
         <div class="srb-grid">
             <button type="button" class="menu_button" data-act="rejudge" ${on ? '' : 'disabled'}>Re-judge last turn</button>
             <button type="button" class="menu_button" data-act="trace">Show trace</button>
-            <button type="button" class="menu_button" data-act="start">${latest ? 'Adjust values' : 'Starting point'}</button>
+            <button type="button" class="menu_button" data-act="start">Adjust values</button>
             <button type="button" class="menu_button" data-act="edit">Edit rulebook</button>
         </div>
+        <button type="button" class="menu_button srb-wide" data-act="reassess">Reassess the starting point</button>
         <button type="button" class="srb-link" data-act="detach">Detach rulebook from this chat</button>
         ${detachConfirm()}`;
 }
