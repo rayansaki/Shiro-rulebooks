@@ -38,6 +38,7 @@ export function normalize(draft) {
         if (m.fade) m.fade = { amount: num(m.fade.amount) ?? 0, to: num(m.fade.to) ?? 0, after: num(m.fade.after) ?? 0 };
         if (m.gate) m.gate = { meter: m.gate.meter, min: num(m.gate.min) ?? 0 };
         if (!m.transient) delete m.transient;
+        if (!m.displayOnly) delete m.displayOnly;
         for (const l of m.levels || []) { l.from = num(l.from) ?? 0; if (!l.status) delete l.status; }
         (m.levels || []).sort((a, b) => a.from - b.from);
     }
@@ -266,6 +267,7 @@ function renderNav() {
         if (m.gate) bits.push(`locked until ${labelOf(m.gate.meter)} ${str(m.gate.min)}`);
         if (m.fade) bits.push('drifts');
         if (m.transient) bits.push('fast');
+        if (m.displayOnly) bits.push('display only');
         return navItem('sel-meter', m.id, sel.kind === 'meter' && sel.id === m.id, m.label || m.id, bits.join(' · '), m.color || '#888');
     }).join('') || '<div class="srb-hint">No meters yet.</div>';
     const ids = Object.keys(r.events || {});
@@ -396,13 +398,14 @@ function meterPage(m) {
             </div><div class="srb-hint" data-live="fade">${esc(fadeSentence(m))}</div>` : ''}
         </div>
         ${check(`${P}.transient`, !!m.transient, 'Fast meter', 'Always described in the note, even at its starting level. For in-the-moment states the card can\'t cover.')}
+        ${check(`${P}.displayOnly`, !!m.displayOnly, 'Display only', 'Scored and shown in the extension, but never sent to the main model: no line in the note at any level. Events still change it, and its events can still go in the journal.')}
         <div class="srb-b-sub">Limits for this meter only <span class="srb-hint">(leave blank to use the rulebook's)</span></div>
         <div class="srb-b-grid3">
             ${[['gainCap', 'Most gained per turn'], ['levelMargin', 'Level margin'], ['softZone', 'Slow-down band (0 to 1)']].map(([k, l]) => field(l, input(`${P}.${k}`, m[k], `inputmode="decimal" placeholder="Rulebook: ${esc(str(limits[k]))}"`))).join('')}
         </div>
 
         <div class="srb-row srb-between srb-b-levelhead"><h4>Levels</h4><button type="button" class="menu_button" data-act="add-level">Add level</button></div>
-        <div class="srb-hint">The instruction is what the main model is told while the meter sits in that level. ${esc(TOKENS)} An empty instruction sends nothing for that level.</div>
+        <div class="srb-hint">${m.displayOnly ? 'This meter is display only, so these instructions are never sent. They\'re kept in case you turn it back on.' : `The instruction is what the main model is told while the meter sits in that level. ${esc(TOKENS)} An empty instruction sends nothing for that level.`}</div>
         ${(m.levels || []).map((l, i) => `<div class="srb-b-level">
             <div class="srb-b-levelside">
                 ${field('From', input(`${P}.level.${i}.from`, l.from, 'inputmode="numeric"'), 'srb-b-from')}
@@ -527,6 +530,7 @@ function apply(bind, el) {
             return false;
         }
         if (k === 'transient') { if (v) m.transient = true; else delete m.transient; return false; }
+        if (k === 'displayOnly') { if (v) m.displayOnly = true; else delete m.displayOnly; return true; }
         if (k === 'level') { const l = m.levels?.[Number(parts[3])]; if (l) l[parts[4]] = v; return false; }
         if (['gainCap', 'softZone', 'levelMargin'].includes(k)) { if (String(v).trim() === '') delete m[k]; else m[k] = v; return false; }
         m[k] = v;

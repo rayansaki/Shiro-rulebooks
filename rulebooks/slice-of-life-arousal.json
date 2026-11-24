@@ -186,6 +186,7 @@
       "softZone": 0,
       "levelMargin": 3,
       "transient": true,
+      "displayOnly": true,
       "fade": {
         "amount": 10,
         "to": 0,

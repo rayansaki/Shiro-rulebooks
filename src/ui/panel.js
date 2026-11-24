@@ -109,7 +109,7 @@ export function renderPanel() {
         return `
             <div class="srb-meter ${locked ? 'srb-locked' : ''}">
                 <div class="srb-meter-top">
-                    <span class="srb-meter-name">${esc(m.label)}</span>
+                    <span class="srb-meter-name">${esc(m.label)}${m.displayOnly ? ' <i class="fa-solid fa-eye srb-muted" title="Display only: never sent to the main model"></i>' : ''}</span>
                     <span class="srb-meter-level">${locked ? '<i class="fa-solid fa-lock"></i> Locked' : esc(at.state.levels[m.id])}
                         ${locked ? '' : `<span class="srb-meter-val">${fmtValue(m, v)}</span>`}
                         ${delta ? `<span class="srb-delta ${delta > 0 ? 'up' : 'down'}">${delta > 0 ? '+' : '−'}${Math.abs(delta)}</span>` : ''}</span>

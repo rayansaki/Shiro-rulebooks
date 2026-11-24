@@ -35,6 +35,7 @@ export function validateRulebook(input) {
             if (m[k] !== undefined && !(Number.isFinite(Number(m[k])) && Number(m[k]) >= 0)) errors.push(`${where}: "${k}" must be a number of 0 or more.`);
             else if (m[k] !== undefined) m[k] = Number(m[k]);
         }
+        if (m.displayOnly !== undefined && typeof m.displayOnly !== 'boolean') errors.push(`${where}: "displayOnly" must be true or false.`);
         if (m.fade !== undefined) {
             if (!m.fade || !(Number(m.fade.amount) > 0)) errors.push(`${where}: "fade" needs an "amount" above 0.`);
             else m.fade = { amount: Number(m.fade.amount), to: clamp(Number(m.fade.to ?? m.min), m.min, m.max), after: Math.max(0, Math.floor(Number(m.fade.after ?? 0)) || 0) };
@@ -356,6 +357,7 @@ export function composeNote(rb, state, start, journal, turn, opts = {}) {
     const lines = [];
     for (const m of rb.meters) {
         if (m.gate && !state.unlocked[m.id]) continue;
+        if (m.displayOnly) continue; // shown in the extension, never sent to the main model
         const level = state.levels[m.id];
         const startLevel = start?.levels?.[m.id];
         // A fast (transient) meter is a state of the moment: the card's opening scene doesn't cover

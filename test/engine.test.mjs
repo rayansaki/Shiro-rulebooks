@@ -301,3 +301,23 @@ test('a cooldown caps gains for the next N turns, then ends', () => {
     assert.deepEqual(applyTurn(rb, makeState(rb, {}), [{ type: 'climax', severity: 'severe', cancelled: true }]).state.cool, {});
     assert.ok(validateRulebook({ ...rb, events: { ...rb.events, bad: { description: 'b', effects: {}, cooldown: { nope: 2 } } } }).errors.some(e => /unknown meter "nope"/.test(e)));
 });
+
+test('a display-only meter is scored but never appears in the note', () => {
+    const { rulebook: rb, errors } = validateRulebook({
+        name: 'd',
+        meters: [
+            { id: 'love', min: 0, max: 100, levels: [{ from: 0, name: 'Low', instruction: 'cold' }, { from: 50, name: 'High', instruction: 'warm' }] },
+            { id: 'arousal', min: 0, max: 100, transient: true, displayOnly: true, gainCap: 40, levels: [{ from: 0, name: 'Calm', instruction: '' }, { from: 30, name: 'Warm', instruction: 'flustered' }] },
+        ],
+        events: { flirt: { description: 'f', always: true, effects: { serious: { arousal: 35, love: 5 } } } },
+    });
+    assert.deepEqual(errors, []);
+    const start = makeState(rb, { love: 20, arousal: 0 });
+    const s = applyTurn(rb, makeState(rb, { love: 60, arousal: 0 }), [{ type: 'flirt', severity: 'serious' }]).state;
+    assert.equal(s.values.arousal, 35, 'still scored');
+    assert.equal(s.levels.arousal, 'Warm');
+    const note = composeNote(rb, s, start, [], 1, { header: 'H' });
+    assert.match(note, /warm/);
+    assert.doesNotMatch(note, /flustered|Arousal|arousal/, 'nothing about it is sent');
+    assert.ok(validateRulebook({ ...rb, meters: rb.meters.map(m => ({ ...m, displayOnly: 'yes' })) }).errors.some(e => /displayOnly/.test(e)));
+});
