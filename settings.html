@@ -88,7 +88,7 @@
             <label class="srb-field">Depth (0 = after the last message)
                 <input type="number" id="srb_depth" class="text_pole" min="0" max="20" step="1">
             </label>
-            <div class="srb-hint">Sent with role user. At depth 0 it joins in-chat prompts with order 100. To keep your Post History last, give Post History (and anything else that must come after the note) an injection order below 100 in the prompt manager.</div>
+            <div class="srb-hint">Sent with role user, in SillyTavern's order-100 group for in-chat prompts (an extension can't change that). A higher order is placed closer to the end, so to keep your Post History (or anything else) after the note, give it an injection order above 100 in the prompt manager, e.g. Tracker 101 and Post History 102.</div>
             <label class="srb-field">Header
                 <textarea id="srb_header" class="text_pole" rows="3"></textarea>
             </label>
