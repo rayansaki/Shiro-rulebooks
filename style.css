@@ -107,18 +107,21 @@
 .srb-row.srb-end { justify-content: flex-end; }
 .srb-row.srb-between { justify-content: space-between; }
 /* SillyTavern sizes .menu_button to min-content, which wraps every word: size ours to their text. */
+/* !important because some themes set button widths with !important too. */
 .srb-window .menu_button,
 .srb-settings .menu_button,
 .srb-chips .menu_button {
-    width: max-content;
-    max-width: 100%;
-    white-space: normal;
+    width: max-content !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+    word-break: normal !important;
     padding: 4px 10px;
     box-sizing: border-box;
 }
 .srb-row .menu_button, .srb-grid .menu_button { margin: 0; }
 .srb-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-.srb-grid .menu_button { width: 100%; min-height: 36px; justify-content: center; text-align: center; }
+.srb-window .srb-grid .menu_button { width: 100% !important; min-height: 36px; justify-content: center; text-align: center; }
 .srb-field { display: flex; flex-direction: column; gap: 4px; font-size: 0.9em; }
 .srb-field select, .srb-field input, .srb-field textarea { margin: 0; }
 .srb-notice {
