@@ -104,6 +104,7 @@ jQuery(async () => {
             openEditor: (id) => openBuilder(id),
             openTrace: () => openTrace(),
             openSettings: () => openSettingsDrawer(),
+            settingsChanged: () => renderSettings(),
         });
         createStartDialog();
         createBuilder(() => { renderSettings(); updateInjection(); refreshAll(); });

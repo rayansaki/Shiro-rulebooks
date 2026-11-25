@@ -1,6 +1,6 @@
 // The Rulebook window: on/off, judge context, meters, status, the note, and actions.
 import { statusLine, fmtValue } from '../engine.js';
-import { ctx, settings, isSoloChat, chatMeta, chatRulebook, judgeMode, stateAt, findSnapBefore, lastReplyBefore, currentCharacter } from '../state.js';
+import { ctx, settings, saveSettings, isSoloChat, chatMeta, chatRulebook, judgeMode, stateAt, findSnapBefore, lastReplyBefore, currentCharacter } from '../state.js';
 import { status, noteFor, setEnabled, setContextMode, rejudgeLatest, attach, detach, runAssessment, isJudging } from '../controller.js';
 import { profileLabel } from '../judge.js';
 import { FloatingWindow, esc } from './window.js';
@@ -42,7 +42,14 @@ async function onClick(e) {
     if (act === 'manual-start') return actions.openStart({ fresh: true });
     if (act === 'attach') {
         const id = win.body.querySelector('[data-role="attach-select"]')?.value;
-        if (id) return attach(id);
+        if (!id) return;
+        const ch = currentCharacter();
+        if (ch?.avatar && win.body.querySelector('[data-role="attach-assign"]')?.checked) {
+            settings().assignments[ch.avatar] = id;
+            saveSettings();
+            actions.settingsChanged?.();
+        }
+        return attach(id);
     }
     if (act === 'detach') { confirmDetach = true; return renderPanel(); }
     if (act === 'detach-no') { confirmDetach = false; return renderPanel(); }
@@ -70,6 +77,7 @@ export function renderPanel() {
             <label class="srb-field">Rulebook
                 <select class="text_pole" data-role="attach-select">${lib.map(([id, r]) => `<option value="${esc(id)}" ${id === assigned ? 'selected' : ''}>${esc(r.name || id)}</option>`).join('')}</select>
             </label>
+            ${ch?.avatar ? `<label class="checkbox_label"><input type="checkbox" data-role="attach-assign" ${assigned ? '' : 'checked'}> <span>${assigned ? `Also switch new chats with ${esc(ch.name)} to this rulebook` : `Also use this rulebook for new chats with ${esc(ch.name)}`}</span></label>` : ''}
             <button type="button" class="menu_button srb-primary" data-act="attach">Attach and work out the starting point</button>
             <div class="srb-hint">The assessor reads the character sheet${s.assess.readHistory ? ' and the story so far' : ''} and proposes where ${esc(ch?.name || 'the character')} starts on each meter.</div>`;
         return;

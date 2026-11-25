@@ -127,7 +127,7 @@ function renderCharacters() {
     $id('srb_char_recent').innerHTML = recent.map(charRow).join('') || '<div class="srb-hint">No chats yet.</div>';
     const assigned = chars.filter(c => s.assignments[c.avatar]);
     const btn = $id('srb_char_all');
-    btn.textContent = showAllAssigned ? 'Hide the list' : `Show the ${assigned.length} character${assigned.length === 1 ? '' : 's'} with a rulebook`;
+    btn.textContent = showAllAssigned ? 'Hide the list' : `Show the ${assigned.length} character${assigned.length === 1 ? '' : 's'} with a rulebook for new chats`;
     btn.hidden = !assigned.length;
     const box = $id('srb_char_assigned');
     box.hidden = !showAllAssigned;
