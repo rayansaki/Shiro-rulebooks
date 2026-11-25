@@ -175,7 +175,7 @@ function meterList(rb) {
     }).join('\n');
 }
 
-const jsonShape = (rb) => `{"meters": {${rb.meters.map(m => `"${m.id}": {"value": <number>, "reason": "<15 words>"}`).join(', ')}}}`;
+const jsonShape = (rb) => `{"meters": {${rb.meters.map(m => `"${m.id}": {"reason": "<15 words>", "value": <number>}`).join(', ')}}}`;
 
 /**
  * Messages for one assessment run.
@@ -187,7 +187,7 @@ export async function buildAssessMessages(rb, baseline = null) {
     const n = names();
     const s = settings();
     const intro = `Rate how things already stand between ${n.char} and ${n.user}: what is established between them, not who ${n.char} is in general. ${n.char}'s personality, wishes and plans, and anything ${n.char} attempts in the opening scene, show where things may go; they don't count until they have actually happened between them. Feelings and habits the sheet says already exist do count. Someone vicious to everyone else can still be kind toward ${n.user}.`;
-    const anchors = 'Use the level descriptions as anchors: pick the level that matches how things stand, then place the number toward the less extreme end of that level unless the sheet clearly puts it further out. Leave room for the story to move things. A meter\'s description, where given, says what it measures and what it ignores.';
+    const anchors = `Use the level descriptions as anchors: pick the level that matches how things stand, then place the number toward the less extreme end of that level unless the sheet clearly puts it further out. Leave room for the story to move things. A meter's description, where given, says what it measures and what it ignores. A reason that describes what ${n.char} wants, intends or plans means the value is too far out: rate what has actually happened.`;
     const system = baseline
         ? `You update a roleplay rulebook's meters. You get ${n.char}'s character sheet, where the meters stood at the start (as the sheet describes ${n.char}), and the story so far. Work out where ${n.char} stands toward ${n.user} now, at the end of the story so far. ${intro} Use the starting values as the reference point and rate where things stand now on the same scale. Leave a meter where it started if the story hasn't touched it, but don't hold back a change the story supports: a long story can move a meter a long way.
 
@@ -196,17 +196,17 @@ ${meterList(rb)}
 
 ${anchors}
 
-For each meter give a whole number within its range and a reason of at most 15 words, based on what happened in the story.
+For each meter give a reason of at most 15 words, based on what happened in the story, then a whole number within its range.
 Reply with JSON only, in this shape:
 ${jsonShape(rb)}`
-        : `You set the starting point for a roleplay rulebook. Read the character sheet and work out where ${n.char} stands toward ${n.user} at the start of the story, as the sheet describes it, on each meter below. ${intro} If the sheet says nothing about a meter, use a sensible value for two people with the relationship the sheet describes.
+        : `You set the starting point for a roleplay rulebook. Read the character sheet and work out where ${n.char} stands toward ${n.user} at the start of the story, as the sheet describes it, on each meter below. ${intro} If nothing is established between them yet for a meter (for example, they have never been intimate), start it at the level that fits two people with no history there: the middle of a two-sided meter, the low end of a one-sided one. Don't fill the gap with personality or plans.
 
 Meters:
 ${meterList(rb)}
 
 ${anchors}
 
-For each meter give a whole number within its range and a reason of at most 15 words, based on the sheet.
+For each meter give a reason of at most 15 words, based on the sheet, then a whole number within its range.
 Reply with JSON only, in this shape:
 ${jsonShape(rb)}`;
 
