@@ -47,7 +47,11 @@ async function lorebookText(mode) {
     try {
         const wi = await import('../../../../world-info.js');
         if (mode === 'constant') {
-            const entries = await wi.getSortedEntries();
+            // getSortedEntries puts the highest order first (for budget priority); the prompt
+            // SillyTavern builds runs lowest order first, so dated summaries read oldest to newest.
+            const entries = (await wi.getSortedEntries()).map((e, i) => ({ e, i }))
+                .sort((a, b) => (Number(a.e.order) || 0) - (Number(b.e.order) || 0) || b.i - a.i)
+                .map(x => x.e);
             const seen = new Set();
             return entries
                 .filter(e => e.constant && !e.disable && e.content)
@@ -70,9 +74,16 @@ async function lorebookText(mode) {
     }
 }
 
-/** Visible messages before `index` (exclusive), newest last, at most `limit`. */
+/** True for a message that is only an out-of-character note, like "[OOC: ...]" or "(OOC: ...)". */
+const isOocOnly = (text) => /^[\[(]\s*ooc\s*[:\-][\s\S]*[\])]$/i.test(text.trim()) || /^ooc\s*:/i.test(text.trim());
+
+/** Visible messages before `index` (exclusive), newest last, at most `limit`. Empty and OOC-only messages are left out. */
 function history(index, limit) {
-    const msgs = ctx().chat.slice(0, Math.max(0, index)).filter(m => !m.is_system && typeof m.mes === 'string');
+    const msgs = ctx().chat.slice(0, Math.max(0, index)).filter(m => {
+        if (m.is_system || typeof m.mes !== 'string') return false;
+        const t = cleanText(m.mes);
+        return t && !isOocOnly(t);
+    });
     return msgs.slice(-limit).map(line).join('\n\n');
 }
 
