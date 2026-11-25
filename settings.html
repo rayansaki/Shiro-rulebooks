@@ -75,9 +75,13 @@
             <div class="srb-hint">The defaults remove trackers, scene lines, style blocks and HTML code blocks, then any remaining tags (keeping their text).</div>
 
             <h4>Starting point</h4>
-            <label class="srb-field">Assess with
+            <label class="srb-field">New chats (card only)
                 <select id="srb_assess_profile" class="text_pole"></select>
             </label>
+            <label class="srb-field">Existing chats (card and story)
+                <select id="srb_assess_story_profile" class="text_pole"></select>
+            </label>
+            <div class="srb-hint">A new chat only reads the card, which is short. A chat with a story reads the story too, which is much longer, so a cheaper model can make sense there. One model always does the whole assessment.</div>
             <label class="checkbox_label"><input type="checkbox" id="srb_assess_confirm"> <span>Show me the values before the chat starts</span></label>
             <label class="checkbox_label"><input type="checkbox" id="srb_assess_history"> <span>Read the story so far when attached mid-chat</span></label>
 

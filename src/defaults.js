@@ -259,7 +259,8 @@ export const DEFAULT_SETTINGS = {
         strip: DEFAULT_STRIP,
     },
     assess: {
-        profileId: '',        // empty: same as the judge
+        profileId: '',        // new chats (card only); empty: same as the judge
+        storyProfileId: '',   // existing chats (card and story); empty: same as new chats
         confirm: true,
         readHistory: true,
     },

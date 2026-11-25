@@ -60,6 +60,7 @@ function bind() {
 
     $id('srb_judge_profile').addEventListener('change', (e) => { s.judge.profileId = e.target.value; saveSettings(); hooks.changed(); });
     $id('srb_assess_profile').addEventListener('change', (e) => { s.assess.profileId = e.target.value; saveSettings(); });
+    $id('srb_assess_story_profile').addEventListener('change', (e) => { s.assess.storyProfileId = e.target.value; saveSettings(); });
     // Profiles can be created while the page is open: refresh the lists when they're opened.
     ['srb_judge_profile', 'srb_assess_profile'].forEach(id => $id(id).addEventListener('focus', renderProfiles));
 
@@ -97,6 +98,9 @@ function renderProfiles() {
     const a = $id('srb_assess_profile');
     a.innerHTML = `<option value="">Same as the judge</option>${list.map(opt).join('')}`;
     a.value = list.some(p => p.id === s.assess.profileId) ? s.assess.profileId : '';
+    const st = $id('srb_assess_story_profile');
+    st.innerHTML = `<option value="">Same as new chats</option>${list.map(opt).join('')}`;
+    st.value = list.some(p => p.id === s.assess.storyProfileId) ? s.assess.storyProfileId : '';
 }
 
 function renderLibrary() {

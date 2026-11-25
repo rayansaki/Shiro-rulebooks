@@ -336,9 +336,16 @@ export async function judge({ rb, messages, prevEventCount, signal, log = [] }) 
  * The starting-point assessment. Returns { baseline, current, runs }: `current` is null for a new chat
  * (or when reading the story is switched off); then the baseline is also where the chat starts.
  */
+/** The model for an assessment of this chat: one model does both runs. */
+export function assessProfileId() {
+    const s = settings();
+    const story = s.assess.readHistory && hasStory();
+    return (story && s.assess.storyProfileId) || s.assess.profileId || s.judge.profileId;
+}
+
 export async function assess(rb, log = []) {
     const s = settings();
-    const profileId = s.assess.profileId || s.judge.profileId;
+    const profileId = assessProfileId();
     const opts = { maxTokens: s.judge.maxTokens, temperature: 0.3, reasoning: s.judge.reasoning, log };
     const runs = [];
     const run = async (label, messages) => {

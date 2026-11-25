@@ -4,7 +4,7 @@ import {
     ctx, settings, chatMeta, setChatMeta, chatRulebook, judgeMode, isActive, isReply, isStoryReply, isPendingSwipe,
     getSnap, writeSnap, clearSnap, findSnapBefore, lastReplyBefore, startState, stateAt, snapMatches,
 } from './state.js';
-import { buildJudgeMessages, judge, assess, profileLabel } from './judge.js';
+import { buildJudgeMessages, judge, assess, assessProfileId, profileLabel } from './judge.js';
 
 const INJECT_KEY = 'shuri_rulebook';
 const IN_CHAT = 1;
@@ -240,7 +240,7 @@ export async function runAssessment() {
     status.assessError = '';
     emit('change');
     const attempts = [];
-    const model = profileLabel(settings().assess.profileId || settings().judge.profileId);
+    const model = profileLabel(assessProfileId());
     try {
         const r = await assess(rb, attempts);
         status.lastTrace = { kind: 'assessment', at: Date.now(), runs: r.runs, baseline: r.baseline, current: r.current, model, attempts };
