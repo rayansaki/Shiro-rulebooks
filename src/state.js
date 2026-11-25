@@ -125,6 +125,16 @@ export function isReply(msg) {
 }
 
 /**
+ * A char reply that has been, or can be, part of the story: like isReply, but a hidden reply
+ * (for example hidden after Memory Books summarised it) still counts when it has a snapshot.
+ * Image and tool-call messages have no snapshot, so they never count.
+ */
+export function isStoryReply(msg) {
+    if (!msg || msg.is_user || typeof msg.mes !== 'string' || !msg.mes.trim()) return false;
+    return !msg.is_system || !!getSnap(msg);
+}
+
+/**
  * True when a new swipe has been started but not generated yet. Its extra still holds the
  * previous swipe's data until SillyTavern saves the new reply.
  */
@@ -145,7 +155,7 @@ export function snapMatches(s) {
 export function findSnapBefore(index) {
     const chat = ctx().chat;
     for (let i = Math.min(index, chat.length) - 1; i >= 0; i--) {
-        if (isPendingSwipe(chat[i]) || !isReply(chat[i])) continue;
+        if (isPendingSwipe(chat[i]) || !isStoryReply(chat[i])) continue;
         const s = getSnap(chat[i]);
         if (snapMatches(s)) return { index: i, snap: s };
     }
@@ -156,17 +166,17 @@ export function findSnapBefore(index) {
 export function findSnapAfter(index) {
     const chat = ctx().chat;
     for (let i = index + 1; i < chat.length; i++) {
-        if (isPendingSwipe(chat[i]) || !isReply(chat[i])) continue;
+        if (isPendingSwipe(chat[i]) || !isStoryReply(chat[i])) continue;
         const s = getSnap(chat[i]);
         if (snapMatches(s)) return { index: i, snap: s };
     }
     return null;
 }
 
-/** Index of the newest judgeable reply before `index` (exclusive), or -1. */
+/** Index of the newest reply before `index` (exclusive), hidden ones included, or -1. */
 export function lastReplyBefore(index) {
     const chat = ctx().chat;
-    for (let i = Math.min(index, chat.length) - 1; i >= 0; i--) if (isReply(chat[i])) return i;
+    for (let i = Math.min(index, chat.length) - 1; i >= 0; i--) if (isStoryReply(chat[i])) return i;
     return -1;
 }
 

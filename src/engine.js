@@ -28,6 +28,7 @@ export function validateRulebook(input) {
         if (ids.has(m.id)) errors.push(`${where}: the id "${m.id}" is used twice.`);
         ids.add(m.id);
         m.label = m.label || m.id;
+        if (m.description !== undefined && typeof m.description !== 'string') errors.push(`${where}: "description" must be text.`);
         m.min = Number(m.min ?? 0); m.max = Number(m.max ?? 100);
         if (!(m.max > m.min)) errors.push(`${where}: "max" must be above "min".`);
         m.start = clamp(Number(m.start ?? m.min), m.min, m.max);

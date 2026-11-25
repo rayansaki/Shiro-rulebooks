@@ -1,6 +1,6 @@
 // Builds the judge's and the assessor's prompts, calls the model and parses the answers.
 import { SEVERITIES, extractJson, cleanVerdict, cleanAssessment, fmtValue } from './engine.js';
-import { ctx, settings, isReply, currentCharacter } from './state.js';
+import { ctx, settings, isStoryReply, currentCharacter } from './state.js';
 
 const sub = (text) => ctx().substituteParams(String(text ?? ''));
 const names = () => ({ char: ctx().name2 || 'the character', user: ctx().name1 || 'the user' });
@@ -81,7 +81,7 @@ function history(index, limit) {
 function stateText(rb, state, journal, turn) {
     const levels = rb.meters.map(m => {
         if (m.gate && !state.unlocked[m.id]) return `${m.label}: locked (opens when ${rb.meters.find(x => x.id === m.gate.meter)?.label || m.gate.meter} reaches ${m.gate.min})`;
-        return `${m.label}: ${state.levels[m.id]} (${fmtValue(m, state.values[m.id])})`;
+        return `${m.label}${m.description ? ` (${sub(m.description)})` : ''}: ${state.levels[m.id]} (${fmtValue(m, state.values[m.id])})`;
     }).join('\n');
     const recent = (journal || []).slice(-6).map(j => `- Turn ${j.turn} (${j.severity}): ${j.reason || j.type}`).join('\n');
     return `Current levels, ${turn ? `after turn ${turn}` : 'at the start'}:\n${levels}\n\nRecent major events:\n${recent || '- None yet.'}`;
@@ -123,7 +123,7 @@ export async function buildJudgeMessages({ rb, index, mode, prev, base, prevElig
     const c = ctx();
     const n = names();
     const s = settings().judge;
-    const prevReplyIdx = (() => { for (let i = index - 1; i >= 0; i--) if (isReply(c.chat[i])) return i; return -1; })();
+    const prevReplyIdx = (() => { for (let i = index - 1; i >= 0; i--) if (isStoryReply(c.chat[i])) return i; return -1; })();
     const userMsgs = c.chat.slice(prevReplyIdx + 1, index).filter(m => m.is_user && !m.is_system);
 
     const blocks = [];
@@ -169,8 +169,9 @@ export function hasStory() {
 
 function meterList(rb) {
     return rb.meters.map(m => {
-        const lv = m.levels.map(l => `${l.name} from ${fmtValue(m, l.from)}`).join(', ');
-        return `- ${m.id} (${m.label}, ${m.min} to ${m.max}). Levels: ${lv}.`;
+        const head = `- ${m.id} (${m.label}, ${m.min} to ${m.max})${m.description ? `: ${sub(m.description)}` : ''}`;
+        const lv = m.levels.map(l => `  - ${l.name}, from ${fmtValue(m, l.from)}${l.instruction ? `: ${sub(l.instruction)}` : ''}`).join('\n');
+        return `${head}\n  Levels:\n${lv}`;
     }).join('\n');
 }
 
@@ -185,12 +186,15 @@ const jsonShape = (rb) => `{"meters": {${rb.meters.map(m => `"${m.id}": {"value"
 export async function buildAssessMessages(rb, baseline = null) {
     const n = names();
     const s = settings();
-    const intro = `Rate ${n.char}'s attitude toward ${n.user} specifically, not ${n.char}'s personality in general: someone vicious to everyone else can still be kind toward ${n.user}.`;
+    const intro = `Rate how things already stand between ${n.char} and ${n.user}: what is established between them, not who ${n.char} is in general. ${n.char}'s personality, wishes and plans, and anything ${n.char} attempts in the opening scene, show where things may go; they don't count until they have actually happened between them. Feelings and habits the sheet says already exist do count. Someone vicious to everyone else can still be kind toward ${n.user}.`;
+    const anchors = 'Use the level descriptions as anchors: pick the level that matches how things stand, then place the number toward the less extreme end of that level unless the sheet clearly puts it further out. Leave room for the story to move things. A meter\'s description, where given, says what it measures and what it ignores.';
     const system = baseline
-        ? `You update a roleplay rulebook's meters. You get ${n.char}'s character sheet, where the meters stood at the start (as the sheet describes ${n.char}), and the story so far. Work out where ${n.char} stands toward ${n.user} now, at the end of the story so far. ${intro} Keep a meter at its starting value unless the story clearly moved it; when it did, move it as far as the story justifies.
+        ? `You update a roleplay rulebook's meters. You get ${n.char}'s character sheet, where the meters stood at the start (as the sheet describes ${n.char}), and the story so far. Work out where ${n.char} stands toward ${n.user} now, at the end of the story so far. ${intro} Use the starting values as the reference point and rate where things stand now on the same scale. Leave a meter where it started if the story hasn't touched it, but don't hold back a change the story supports: a long story can move a meter a long way.
 
 Meters:
 ${meterList(rb)}
+
+${anchors}
 
 For each meter give a whole number within its range and a reason of at most 15 words, based on what happened in the story.
 Reply with JSON only, in this shape:
@@ -199,6 +203,8 @@ ${jsonShape(rb)}`
 
 Meters:
 ${meterList(rb)}
+
+${anchors}
 
 For each meter give a whole number within its range and a reason of at most 15 words, based on the sheet.
 Reply with JSON only, in this shape:

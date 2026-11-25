@@ -1,7 +1,7 @@
 // Judging turns, the note for the main model, and the starting point.
 import { applyTurn, reviseEvents, nextJournal, reviseJournal, composeNote, normalizeState, makeState } from './engine.js';
 import {
-    ctx, settings, chatMeta, setChatMeta, chatRulebook, judgeMode, isActive, isReply, isPendingSwipe,
+    ctx, settings, chatMeta, setChatMeta, chatRulebook, judgeMode, isActive, isReply, isStoryReply, isPendingSwipe,
     getSnap, writeSnap, clearSnap, findSnapBefore, lastReplyBefore, startState, stateAt, snapMatches,
 } from './state.js';
 import { buildJudgeMessages, judge, assess, profileLabel } from './judge.js';
@@ -348,7 +348,7 @@ export function dialogValues() {
 export function chipModel(index) {
     const c = ctx();
     const msg = c.chat[index];
-    if (!isReply(msg) || index === 0 || !chatMeta()) return null;
+    if (!isStoryReply(msg) || index === 0 || !chatMeta()) return null;
     if (isPendingSwipe(msg) || status.pending.has(index)) return { kind: 'pending' };
     if (status.errors.has(index)) return { kind: 'error', text: status.errors.get(index) };
     const snap = getSnap(msg);

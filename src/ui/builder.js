@@ -39,6 +39,7 @@ export function normalize(draft) {
         if (m.gate) m.gate = { meter: m.gate.meter, min: num(m.gate.min) ?? 0 };
         if (!m.transient) delete m.transient;
         if (!m.displayOnly) delete m.displayOnly;
+        if (!String(m.description || '').trim()) delete m.description;
         for (const l of m.levels || []) { l.from = num(l.from) ?? 0; if (!l.status) delete l.status; }
         (m.levels || []).sort((a, b) => a.from - b.from);
     }
@@ -381,6 +382,7 @@ function meterPage(m) {
             ${field('Highest value', input(`${P}.max`, m.max, 'inputmode="numeric"'))}
             ${field('Fallback start', input(`${P}.start`, m.start, 'inputmode="numeric"'))}
         </div>
+        ${field('What it measures (optional; the judge and the assessment see this, the main model doesn\'t)', input(`${P}.description`, m.description, 'placeholder="e.g. Who leads in sex and intimacy. Everyday decisions don\'t count."'))}
         <div class="srb-hint">${lo !== null && lo < 0 ? 'Two-sided: the negative end means the opposite of the positive one.' : 'One-sided: it measures how much, from none upwards.'} Each chat's real starting point comes from the assessment; the fallback is used only when there isn't one.</div>
         <div data-live="bar">${barHtml(m)}</div>
 
