@@ -199,7 +199,7 @@ ${anchors}
 For each meter give a reason of at most 15 words, based on what happened in the story, then a whole number within its range.
 Reply with JSON only, in this shape:
 ${jsonShape(rb)}`
-        : `You set the starting point for a roleplay rulebook. Read the character sheet and work out where ${n.char} stands toward ${n.user} at the start of the story, as the sheet describes it, on each meter below. ${intro} If nothing is established between them yet for a meter (for example, they have never been intimate), start it at the level that fits two people with no history there: the middle of a two-sided meter, the low end of a one-sided one. Don't fill the gap with personality or plans.
+        : `You set the starting point for a roleplay rulebook. Read the character sheet and work out where ${n.char} stands toward ${n.user} at the start of the story, as the sheet describes it, on each meter below. ${intro} If the sheet doesn't mention a meter directly, infer it from the relationship that is established: a long, happy marriage implies trust even if the sheet never says the word. Only when they have no history at all in that area (they have just met, or have never been intimate) start it at the level that fits two people with no history there: the middle of a two-sided meter, the low end of a one-sided one. Don't fill the gap with personality or plans.
 
 Meters:
 ${meterList(rb)}
