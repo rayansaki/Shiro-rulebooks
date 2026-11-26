@@ -49,7 +49,9 @@ export function renderChips(index) {
         const { snap, revised, editable } = model;
         const chips = snap.events.map((ev, i) => eventChip(rb, ev, i, { editable, revised }));
         for (const [id, d] of Object.entries(snap.fades || {})) {
-            chips.push(`<span class="srb-chip srb-muted">${esc(labelOf(rb, id))} ${d > 0 ? '+' : '−'}${Math.round(Math.abs(d))} · fading</span>`);
+            // Drift can run either way (towards the meter's fade target); small amounts keep one decimal so they don't read as +0.
+            const amt = Math.abs(d) < 1 ? Math.abs(d).toFixed(1) : Math.round(Math.abs(d));
+            chips.push(`<span class="srb-chip srb-muted">${esc(labelOf(rb, id))} ${d > 0 ? '+' : '−'}${amt} · ${d > 0 ? 'building over time' : 'fading'}</span>`);
         }
         for (const [id, c] of Object.entries(snap.cooled || {})) {
             chips.push(`<span class="srb-chip srb-muted">${esc(labelOf(rb, id))} +${Math.round(c.blocked)} blocked · cooling down${c.left > 0 ? ` (${c.left} more turn${c.left === 1 ? '' : 's'})` : ' (last turn)'}</span>`);
