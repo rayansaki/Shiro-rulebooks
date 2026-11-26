@@ -109,7 +109,7 @@ Rules:
 - Behaviour that fits ${n.char}'s current levels is expected, not an event. Score what ${n.user} chooses to do, and ${n.char} acting against or beyond ${n.char}'s current levels. Exception: events marked "always counts" are scored whenever they happen, whoever starts them.
 - Judge severity by how much it matters in this relationship, using the current state and recent events.
 - Check who acts. Each event's description says whether it's something ${n.user} does or something ${n.char} does: pick the event that matches who actually did it in the exchange.
-- Several events can happen in one exchange. If nothing on the list happened, return an empty list.
+- Several events can happen in one exchange. List only events that actually happened in the latest exchange: never list an event to say it didn't happen, doesn't apply or doesn't count. If nothing on the list happened, return an empty list.
 - Keep each reason under 8 words: a plain description of what happened.
 - You also get the previous turn's verdict. If the latest exchange changes what the previous turn meant (for example ${n.user} refused, undid or reversed it), cancel or re-rate those events by their index. Only revise when the meaning clearly changed.
 
