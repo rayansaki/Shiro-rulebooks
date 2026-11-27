@@ -106,6 +106,7 @@ function systemPrompt(rb) {
 Rules:
 - Score only the LATEST EXCHANGE. Everything before it is background: never score it again, even when it is mentioned or remembered.
 - Only count what ${n.char} sees, hears or finds out. ${n.user}'s private thoughts and inner narration are never evidence. A lie ${n.char} hasn't discovered doesn't count until ${n.char} discovers it.
+- ${n.user}'s own message is the only evidence of what ${n.user} chose to do. When ${n.char}'s reply describes ${n.user} acting, speaking or touching in a way ${n.user}'s message didn't, it's the narrator's invention: never score it as ${n.user}'s choice.
 - Behaviour that fits ${n.char}'s current levels is expected, not an event. Score what ${n.user} chooses to do, and ${n.char} acting against or beyond ${n.char}'s current levels. Exception: events marked "always counts" are scored whenever they happen, whoever starts them.
 - Judge severity by how much it matters in this relationship, using the current state and recent events.
 - Check who acts. Each event's description says whether it's something ${n.user} does or something ${n.char} does: pick the event that matches who actually did it in the exchange.
