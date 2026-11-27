@@ -111,6 +111,7 @@ async function judgeMessage(index, signal) {
 
     const start = startState(rb);
     const prev = findSnapBefore(index);
+    const prevMsg = prev ? c.chat[prev.index] : null;
     const prevEligible = !!prev && prev.index === lastReplyBefore(index);
     const base = prev ? normalizeState(rb, prev.snap.after, start) : stateAt(rb, index).state;
     const trace = { kind: 'judge', at: Date.now(), index, mode, model: profileLabel(settings().judge.profileId), attempts: [] };
@@ -121,10 +122,16 @@ async function judgeMessage(index, signal) {
         const { raw, verdict } = await judge({ rb, messages, prevEventCount: prevEligible ? prev.snap.events.length : 0, signal, log: trace.attempts });
         trace.raw = raw;
         trace.verdict = verdict;
-        if (c.getCurrentChatId() !== chatId || c.chat[index] !== msg || fingerprint(msg) !== fp) {
+        // Messages before this one may have been deleted meanwhile (e.g. /cut on a tool-call message),
+        // which shifts indexes: find the reply and the previous judged reply again by identity.
+        const now = c.chat.indexOf(msg);
+        const prevNow = prevMsg ? c.chat.indexOf(prevMsg) : -1;
+        if (c.getCurrentChatId() !== chatId || now < 0 || fingerprint(msg) !== fp || (prevMsg && prevNow < 0)) {
             trace.error = 'The reply changed while it was being judged, so the result was dropped.';
             return;
         }
+        if (now !== index) { trace.index = now; trace.note = `Earlier messages were removed while judging; the reply moved from #${index} to #${now}.`; }
+        if (prev) prev.index = prevNow;
 
         let mid = base;
         let journalBase = prev?.snap?.journal || [];
@@ -143,7 +150,7 @@ async function judgeMessage(index, signal) {
             journal: nextJournal(rb, journalBase, turn, result.applied),
             judged: { at: Date.now(), mode, model: trace.model },
         };
-        writeSnap(index, snap);
+        writeSnap(now, snap);
         await c.saveChat();
         trace.math = result.meters;
         trace.revisedPrevious = revise;
@@ -157,7 +164,7 @@ async function judgeMessage(index, signal) {
         status.pending.delete(index);
         if (!signal?.aborted) status.lastTrace = trace;
         updateInjection();
-        emit('change', { index });
+        emit('change', { index: trace.index ?? index });
     }
 }
 
